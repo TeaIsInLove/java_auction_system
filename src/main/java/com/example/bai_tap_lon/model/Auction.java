@@ -2,69 +2,111 @@ package com.example.bai_tap_lon.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class Auction extends Entity {
-    private Item item;                  // Sản phẩm được đấu giá
-    private Seller seller;              // Người tổ chức (người bán)
-    private AuctionStatus status;       // Trạng thái hiện tại
-    private List<BidTransaction> bidHistory; // Lịch sử các lần đặt giá
-    private BidTransaction winningBid;  // Giao dịch thắng cuộc (lưu tạm hoặc chốt cuối)
+// Auction kế thừa Entity và implement AuctionSubject để phát thông báo
+public class Auction extends Entity implements AuctionSubject {
+    private Item item;
+    private Seller seller;
+    private AuctionStatus status;
+    private List<BidTransaction> bidHistory;
+    private BidTransaction winningBid;
+
+    // Danh sách những người đang "xem" phiên đấu giá này (Giao diện JavaFX hoặc Client Socket)
+    private List<AuctionObserver> observers;
+
+    // Sử dụng ReentrantLock để khóa luồng, bảo vệ dữ liệu khi nhiều người đặt giá cùng lúc
+    private final ReentrantLock lock;
 
     public Auction(Item item, Seller seller) {
-        super(); // Tự động tạo ID cho phiên đấu giá
+        super();
         this.item = item;
         this.seller = seller;
-        this.status = AuctionStatus.OPEN; // Mặc định khi mới tạo là OPEN
+        this.status = AuctionStatus.OPEN; // Mặc định là OPEN [cite: 68]
         this.bidHistory = new ArrayList<>();
+        this.observers = new ArrayList<>();
+        this.lock = new ReentrantLock();
     }
 
-    // Đổi trạng thái phiên đấu giá
-    public void setStatus(AuctionStatus status) {
-        this.status = status;
-    }
-
-    public AuctionStatus getStatus() {
-        return this.status;
-    }
-
-    /**
-     * Phương thức đặt giá.
-     * Dùng 'synchronized' để chặn race condition khi nhiều client gọi cùng lúc.
-     */
-    public synchronized void placeBid(BidTransaction newBid) throws Exception {
-        // 1. Kiểm tra ngoại lệ: Đấu giá khi phiên đã đóng
-        if (this.status != AuctionStatus.RUNNING) {
-            throw new Exception("Phiên đấu giá chưa mở hoặc đã kết thúc!");
-            // Tuần 8 các bạn sẽ tự viết Custom Exception thay cho Exception chung này
+    // --- LOGIC CHUYỂN TRẠNG THÁI ---
+    public void startAuction() {
+        if (this.status == AuctionStatus.OPEN) {
+            this.status = AuctionStatus.RUNNING;
+            System.out.println("Phiên đấu giá bắt đầu!");
         }
-
-        // 2. Kiểm tra ngoại lệ: Đặt giá thấp hơn hoặc bằng giá hiện tại
-        if (newBid.getBidAmount() <= item.getCurrentHighestBid()) {
-            throw new Exception("Giá đặt phải cao hơn mức giá cao nhất hiện tại ($"
-                    + item.getCurrentHighestBid() + ")");
-        }
-
-        // 3. Nếu hợp lệ: Cập nhật dữ liệu
-        bidHistory.add(newBid);
-        winningBid = newBid; // Tạm thời người này đang dẫn đầu
-        item.setCurrentHighestBid(newBid.getBidAmount()); // Cập nhật giá trên Item
-
-        System.out.println(">> Đặt giá thành công! Người dẫn đầu hiện tại: "
-                + newBid.getBidder().getUsername() + " với $" + newBid.getBidAmount());
     }
 
+    public void endAuction() {
+        this.status = AuctionStatus.FINISHED;
+        if (winningBid != null) {
+            System.out.println("Phiên đấu giá kết thúc. Người thắng: " + winningBid.getBidder().getUsername());
+        } else {
+            this.status = AuctionStatus.CANCELED; // Không ai mua
+            System.out.println("Phiên đấu giá bị hủy do không có người trả giá.");
+        }
+    }
+
+    // --- LOGIC ĐA LUỒNG: ĐẶT GIÁ ---
+    public void placeBid(BidTransaction newBid) throws Exception {
+        // Dùng khóa Lock để đảm bảo tại 1 mili-giây, chỉ có 1 người được chạy đoạn code xét giá này
+        lock.lock();
+        try {
+            if (this.status != AuctionStatus.RUNNING) {
+                throw new Exception("Phiên đấu giá chưa mở hoặc đã kết thúc!");
+            }
+
+            if (newBid.getBidAmount() <= item.getCurrentHighestBid()) {
+                throw new Exception("Giá đặt phải cao hơn mức giá cao nhất hiện tại!");
+            }
+
+            // Nếu hợp lệ: Cập nhật hệ thống
+            bidHistory.add(newBid);
+            winningBid = newBid;
+            item.setCurrentHighestBid(newBid.getBidAmount());
+
+            // THÔNG BÁO CHO TẤT CẢ GIAO DIỆN CẬP NHẬT REALTIME
+            notifyObservers(newBid, "Có giá mới: $" + newBid.getBidAmount());
+
+        } finally {
+            // Luôn phải mở khóa trong khối finally để dù có lỗi xảy ra thì hệ thống không bị treo (Deadlock)
+            lock.unlock();
+        }
+    }
+
+    // --- CÁC HÀM CỦA OBSERVER PATTERN ---
+    @Override
+    public void addObserver(AuctionObserver observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(AuctionObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers(BidTransaction newBid, String message) {
+        for (AuctionObserver obs : observers) {
+            obs.update(this, newBid, message);
+        }
+    }
+
+    // Getters...
+    public AuctionStatus getStatus() { return status; }
+    // --- HÀM KẾ THỪA TỪ ENTITY ---
     @Override
     public void printInfo() {
         System.out.println("=== THÔNG TIN PHIÊN ĐẤU GIÁ ===");
         System.out.println("ID Phiên: " + this.getId());
-        System.out.println("Người bán: " + seller.getUsername());
+        if (seller != null) {
+            System.out.println("Người bán: " + seller.getUsername());
+        }
         System.out.println("Trạng thái: " + this.status);
         System.out.println("Tổng số lượt ra giá: " + bidHistory.size());
         if (winningBid != null) {
-            System.out.println("Người đang dẫn đầu/Chiến thắng: " + winningBid.getBidder().getUsername()
+            System.out.println("Người dẫn đầu: " + winningBid.getBidder().getUsername()
                     + " ($" + winningBid.getBidAmount() + ")");
         }
-        item.printInfo();
         System.out.println("===============================");
     }
 }

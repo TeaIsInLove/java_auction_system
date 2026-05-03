@@ -1,0 +1,28 @@
+package com.example.auctionsystem.Controllers;
+
+import com.example.auctionsystem.Model.User;
+import com.example.auctionsystem.Model.UserService;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.fxml.FXML;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+
+public class ListController {
+
+    @FXML
+    private TableView<User> tableView;
+
+    @FXML
+    private TableColumn<User, String> usernameCol;
+
+    @FXML
+    private TableColumn<User, String> passwordCol;
+
+    @FXML
+    public void initialize() {
+        usernameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
+        passwordCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPassword()));
+
+        tableView.getItems().addAll(UserService.getAllUsers());
+    }
+}

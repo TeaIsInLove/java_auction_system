@@ -1,0 +1,18 @@
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.auctionsystem.Controllers.ListController"
+      alignment="CENTER" spacing="10">
+
+    <Label text="USER LIST" />
+
+    <TableView fx:id="tableView" prefWidth="300">
+        <columns>
+            <TableColumn fx:id="usernameCol" text="Username" prefWidth="150"/>
+            <TableColumn fx:id="passwordCol" text="Password" prefWidth="150"/>
+        </columns>
+    </TableView>
+
+</VBox>

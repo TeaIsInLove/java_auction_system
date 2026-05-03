@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="CENTER" spacing="15.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/26" fx:controller="com.example.auctionsystem.Controllers.RegisterController">
+
+    <Label text="Register" />
+
+    <TextField fx:id="usernameField" promptText="Username" />
+    <PasswordField fx:id="passwordField" promptText="Password" />
+
+    <Button onAction="#handleRegister" text="Register" />
+    <Button onAction="#goToLogin" text="Back to Login" />
+
+    <Label fx:id="messageLabel" />
+   <padding>
+      <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+   </padding>
+
+</VBox>

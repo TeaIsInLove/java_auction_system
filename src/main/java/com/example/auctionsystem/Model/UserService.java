@@ -8,6 +8,7 @@ import java.util.List;
 
 public class UserService {
     private static final Map<String, String> users = new HashMap<>();
+    private static final Map<String, String> roles = new HashMap<>();
 
     static {
         users.put("admin", "123");
@@ -15,18 +16,29 @@ public class UserService {
         users.put("user2", "222");
         users.put("user3", "333");
         users.put("user4", "444");
+
+        roles.put("admin", "ADMIN");
     }
 
-    public static boolean login(String username, String password) {
-        return users.containsKey(username)
-                && users.get(username).equals(password);
+
+    public static User login(String username, String password) {
+        if (users.containsKey(username)
+                && users.get(username).equals(password)) {
+
+            String role = roles.getOrDefault(username, "USER");
+            return new User(username, password, role);
+        }
+        return null;
     }
 
     public static List<User> getAllUsers() {
         List<User> list = new ArrayList<>();
 
         for (Map.Entry<String, String> entry : users.entrySet()) {
-            list.add(new User(entry.getKey(), entry.getValue()));
+            String username = entry.getKey();
+            String password = entry.getValue();
+            String role = roles.getOrDefault(username, "USER");
+            list.add(new User(entry.getKey(), entry.getValue(), role));
         }
 
         return list;
@@ -48,6 +60,7 @@ public class UserService {
 
         // ✅ QUAN TRỌNG: lưu vào map
         users.put(username, password);
+        roles.put(username, "USER");
 
         System.out.println("User registered: " + username);
     }

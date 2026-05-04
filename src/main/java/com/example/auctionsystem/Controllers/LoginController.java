@@ -1,5 +1,6 @@
 package com.example.auctionsystem.Controllers;
 
+import com.example.auctionsystem.Model.User;
 import com.example.auctionsystem.Model.UserService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,16 +24,29 @@ public class LoginController {
         String user = usernameField.getText().trim();
         String pass = passwordField.getText().trim();
 
-        if (UserService.login(user, pass)) {
-            messageLabel.setText("Đăng nhập thành công");
+        User currentUser = UserService.login(user, pass);
+
+        if (currentUser != null) {
 
             try {
-                FXMLLoader loader = new FXMLLoader(
-                        getClass().getResource("/com/example/auctionsystem/Views/List.fxml")
-                );
-                Parent root = loader.load();
+                Stage stage = (Stage) usernameField.getScene().getWindow();
+                Parent root;
 
-                    Stage stage = (Stage) usernameField.getScene().getWindow();
+                if ("ADMIN".equals(currentUser.getRole())) {
+                    // 👉 ADMIN
+                    root = FXMLLoader.load(
+                            getClass().getResource("/com/example/auctionsystem/Views/List.fxml")
+                    );
+                    messageLabel.setText("Đăng nhập Admin thành công");
+
+                } else {
+                    // 👉 USER
+                    root = FXMLLoader.load(
+                            getClass().getResource("/com/example/auctionsystem/Views/Auction.fxml")
+                    );
+                    messageLabel.setText("Đăng nhập User thành công");
+                }
+
                 stage.setScene(new Scene(root));
 
             } catch (Exception e) {

@@ -38,7 +38,7 @@ public class RegisterController {
             messageLabel.setStyle("-fx-text-fill: green;");
             messageLabel.setText("Đăng ký thành công!");
 
-            // 👉 chuyển về login
+            //  chuyển về login
             Parent root = FXMLLoader.load(
                     getClass().getResource("/com/example/auctionsystem/Views/login.fxml")
             );

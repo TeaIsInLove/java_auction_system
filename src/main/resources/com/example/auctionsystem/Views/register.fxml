@@ -7,12 +7,14 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" spacing="15.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/26" fx:controller="com.example.auctionsystem.Controllers.RegisterController">
+<VBox alignment="CENTER" spacing="15.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.auctionsystem.Controllers.RegisterController">
 
     <Label text="Register" />
 
     <TextField fx:id="usernameField" promptText="Username" />
-    <PasswordField fx:id="passwordField" promptText="Password" />
+    <TextField fx:id="emailField" promptText="Email" />
+   <PasswordField fx:id="passwordField" promptText="Password" />
+   <PasswordField fx:id="confirmPasswordField" promptText="Confirm Password" />
 
     <Button onAction="#handleRegister" text="Register" />
     <Button onAction="#goToLogin" text="Back to Login" />

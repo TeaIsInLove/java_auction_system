@@ -1,6 +1,6 @@
 package com.example.auctionsystem.Controllers;
 
-import com.example.auctionsystem.Model.UserService;
+import com.example.auctionsystem.Service.AuthService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,20 +20,47 @@ public class RegisterController {
     private TextField usernameField;
 
     @FXML
+    private TextField emailField;
+
+    @FXML
     private PasswordField passwordField;
+
+    @FXML
+    private PasswordField confirmPasswordField;
 
     @FXML
     private Label messageLabel;
 
-    private UserService userService = new UserService();
+    private AuthService authService = new AuthService();
 
     @FXML
     public void handleRegister(ActionEvent event) {
         try {
             String username = usernameField.getText();
+            String email = emailField.getText();
             String password = passwordField.getText();
+            String confirmPassword = confirmPasswordField.getText();
 
-            userService.register(username, password);
+            if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                showError("Vui long nhap day du thong tin dang ky.");
+                return;
+            }
+
+            if (!email.contains("@")) {
+                showError("Email khong hop le.");
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                showError("Mat khau xac nhan khong khop.");
+                return;
+            }
+
+            boolean registered = authService.register(username, email, password);
+            if (!registered) {
+                showError("Email da ton tai!");
+                return;
+            }
 
             messageLabel.setStyle("-fx-text-fill: green;");
             messageLabel.setText("Đăng ký thành công!");
@@ -49,6 +76,11 @@ public class RegisterController {
             messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText(e.getMessage());
         }
+    }
+
+    private void showError(String message) {
+        messageLabel.setStyle("-fx-text-fill: red;");
+        messageLabel.setText(message);
     }
 
     @FXML

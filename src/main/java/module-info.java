@@ -11,6 +11,8 @@ module com.example.auctionsystem {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires java.naming;
+    requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
     opens com.example.auctionsystem.Controllers to javafx.fxml;
     exports com.example.auctionsystem;

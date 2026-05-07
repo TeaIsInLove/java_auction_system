@@ -1,4 +1,6 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity;
+
+import com.example.bai_tap_lon.model.entity.user.Bidder;
 
 import java.time.LocalDateTime;
 

@@ -1,4 +1,6 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity.user;
+
+import com.example.bai_tap_lon.model.entity.Entity;
 
 public abstract class User extends Entity {
     // các thuộc tính cơ bản của một người dùng hệ thống
@@ -7,6 +9,7 @@ public abstract class User extends Entity {
     private String email;
     // cóntructor khỏi tạo người dùng
     public User(String username, String password, String email){
+        super();
         this.username=username;
         this.password=password;
         this.email=email;

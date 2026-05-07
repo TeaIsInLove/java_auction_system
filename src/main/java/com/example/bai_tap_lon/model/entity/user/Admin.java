@@ -1,4 +1,4 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity.user;
 
 public class Admin extends User {
     private int clearanceLevel; // Cấp độ quyền hạn (ví dụ: 1 là cao nhất)

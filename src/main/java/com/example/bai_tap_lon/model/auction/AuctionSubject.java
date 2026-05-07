@@ -1,4 +1,6 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.auction;
+
+import com.example.bai_tap_lon.model.entity.BidTransaction;
 
 public interface AuctionSubject {
     void addObserver(AuctionObserver observer); // Thêm người theo dõi

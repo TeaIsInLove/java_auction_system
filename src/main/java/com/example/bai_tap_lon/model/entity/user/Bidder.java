@@ -1,11 +1,15 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity.user;
 
-public class Bidder extends User{
+public class Bidder extends User {
     private double balance; // Số dư tài khoản để tham gia đấu giá
 
     public Bidder(String username, String password, String email){
         super(username, password, email);
-        this.balance=balance;
+        this.balance=0.0;
+    }
+    public Bidder(String username, String password, String email, double initialBalance){
+        super(username, password, email);
+        this.balance = initialBalance;
     }
     public double getBalance(){
         return  balance;

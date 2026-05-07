@@ -1,4 +1,4 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity.user;
 
 public class Seller extends User {
     private String shopName;

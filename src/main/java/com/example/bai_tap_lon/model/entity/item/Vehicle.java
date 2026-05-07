@@ -1,4 +1,4 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity.item;
 
 import java.time.LocalDateTime;
 

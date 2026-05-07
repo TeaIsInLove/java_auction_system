@@ -1,4 +1,9 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.auction;
+
+import com.example.bai_tap_lon.model.entity.BidTransaction;
+import com.example.bai_tap_lon.model.entity.Entity;
+import com.example.bai_tap_lon.model.entity.item.Item;
+import com.example.bai_tap_lon.model.entity.user.Seller;
 
 import java.util.ArrayList;
 import java.util.List;

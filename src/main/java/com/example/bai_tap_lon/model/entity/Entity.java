@@ -1,4 +1,4 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.entity;
 
 import java.util.UUID;
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.example.bai_tap_lon.dao;
 
-import com.example.bai_tap_lon.model.User;
+import com.example.bai_tap_lon.model.entity.user.User;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

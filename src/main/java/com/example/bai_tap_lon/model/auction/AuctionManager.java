@@ -1,4 +1,4 @@
-package com.example.bai_tap_lon.model;
+package com.example.bai_tap_lon.model.auction;
 
 import java.util.ArrayList;
 import java.util.List;

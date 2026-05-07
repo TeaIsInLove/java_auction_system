@@ -1,8 +1,8 @@
 package com.example.bai_tap_lon;
 
 import com.example.bai_tap_lon.dao.UserDAO;
-import com.example.bai_tap_lon.model.Bidder;
-import com.example.bai_tap_lon.model.User;
+import com.example.bai_tap_lon.model.entity.user.Bidder;
+import com.example.bai_tap_lon.model.entity.user.User;
 
 public class Main {
     public static void main(String[] args) {

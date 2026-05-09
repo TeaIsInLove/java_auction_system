@@ -3,221 +3,211 @@ package com.auction.network;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.AuthenticationException;
 import com.auction.exception.InvalidBidException;
-import com.auction.manager.AuctionManager;
 import com.auction.model.Auction;
 import com.auction.model.Bid;
-import com.auction.model.User;
-import com.auction.model.item.Item;
-import com.auction.pattern.AuctionObserver;
+import com.auction.model.user.Bidder;
+import com.auction.model.user.Seller;
+import com.auction.model.user.User;
+import com.auction.network.protocol.Message;
+import com.auction.network.protocol.MessageType;
+import com.auction.pattern.observer.AuctionEvent;
+import com.auction.pattern.singleton.AuctionManager;
+import com.auction.service.AuctionService;
+import com.auction.service.BidService;
+import com.auction.service.UserService;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * TUẦN 9+10 - ClientHandler: Runnable xử lý 1 client kết nối
- *
- * Mỗi client kết nối → Server tạo 1 ClientHandler chạy trong ThreadPool.
- * ClientHandler:
- *   1. Đọc Request từ client (ObjectInputStream)
- *   2. Gọi AuctionManager xử lý nghiệp vụ
- *   3. Trả Response về client (ObjectOutputStream)
- *
- * AuctionObserver: ClientHandler implements AuctionObserver.
- * Khi có bid mới → onBidPlaced() được gọi → push Response đến client này.
- * → Đây là cơ chế REALTIME UPDATE qua Socket.
- *
- * Thread-safety:
- *   - out (ObjectOutputStream) cần synchronized khi push vì
- *     push (từ auction thread) và reply (từ handler thread) có thể đồng thời.
+ * Handles all communication with a single connected client.
+ * Runs on its own thread (submitted by {@link AuctionServer}).
  */
-public class ClientHandler implements Runnable, AuctionObserver {
+public class ClientHandler implements Runnable {
 
-    private final Socket       socket;
-    private ObjectInputStream  in;
+    private static final Logger LOG = Logger.getLogger(ClientHandler.class.getName());
+
+    private final Socket socket;
+    private final AuctionServer server;
+    private ObjectInputStream in;
     private ObjectOutputStream out;
-    private final Object       outLock = new Object(); // lock cho việc ghi ra socket
 
-    private final AuctionManager manager = AuctionManager.getInstance();
-    private String sessionToken = null; // null = chưa đăng nhập
+    private User authenticatedUser;
 
-    public ClientHandler(Socket socket) {
+    private final UserService    userService    = new UserService();
+    private final AuctionService auctionService = new AuctionService();
+    private final BidService     bidService     = new BidService();
+
+    public ClientHandler(Socket socket, AuctionServer server) {
         this.socket = socket;
+        this.server = server;
     }
 
-    // ── Main loop ────────────────────────────────────────────────────────────
     @Override
     public void run() {
-        String clientAddr = socket.getRemoteSocketAddress().toString();
-        System.out.println("[Handler] Client connected: " + clientAddr);
-
         try {
-            // QUAN TRỌNG: tạo ObjectOutputStream TRƯỚC ObjectInputStream
-            // Nếu ngược lại → cả 2 phía chờ nhau → deadlock
             out = new ObjectOutputStream(socket.getOutputStream());
-            out.flush(); // flush header ngay
             in  = new ObjectInputStream(socket.getInputStream());
 
-            // Vòng lặp xử lý request
-            while (!socket.isClosed()) {
-                Request request = (Request) in.readObject();
-                Response response = dispatch(request);
-                sendResponse(response);
+            Message msg;
+            while ((msg = (Message) in.readObject()) != null) {
+                handle(msg);
             }
-
-        } catch (EOFException | java.net.SocketException e) {
-            // Client ngắt kết nối bình thường
-            System.out.println("[Handler] Client disconnected: " + clientAddr);
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("[Handler] Error: " + e.getMessage());
+            LOG.info("Client disconnected: " + socket.getRemoteSocketAddress());
         } finally {
-            cleanup();
+            server.removeClient(this);
+            close();
         }
     }
 
-    // ── Request dispatcher ────────────────────────────────────────────────────
-    /**
-     * Phân loại Request và gọi handler tương ứng.
-     * Mọi exception nghiệp vụ → Response.error() thay vì crash handler.
-     */
-    private Response dispatch(Request request) {
-        System.out.println("[Handler] Received: " + request);
+    // ── Dispatch ─────────────────────────────────────────────────────────
+    private void handle(Message msg) {
+        LOG.fine("Received: " + msg);
         try {
-            switch (request.getType()) {
-                case LOGIN:             return handleLogin(request);
-                case LOGOUT:            return handleLogout(request);
-                case REGISTER:          return handleRegister(request);
-                case GET_ALL_AUCTIONS:  return handleGetAllAuctions(request);
-                case GET_AUCTION_BY_ID: return handleGetAuctionById(request);
-                case PLACE_BID:         return handlePlaceBid(request);
-                case CREATE_AUCTION:    return handleCreateAuction(request);
-                case SUBSCRIBE_AUCTION: return handleSubscribe(request);
-                case UNSUBSCRIBE_AUCTION: return handleUnsubscribe(request);
-                default:
-                    return Response.error("Unknown request type: " + request.getType());
+            switch (msg.getType()) {
+                case LOGIN_REQUEST    -> handleLogin(msg);
+                case REGISTER_REQUEST -> handleRegister(msg);
+                case GET_AUCTIONS     -> handleGetAuctions(msg);
+                case GET_AUCTION_DETAIL -> handleGetDetail(msg);
+                case PLACE_BID        -> handlePlaceBid(msg);
+                case AUTO_BID         -> handleAutoBid(msg);
+                case CREATE_AUCTION   -> handleCreateAuction(msg);
+                case CANCEL_AUCTION   -> handleCancelAuction(msg);
+                case DISCONNECT       -> close();
+                default -> send(new Message(MessageType.ERROR, "Unknown message type", null));
             }
-        } catch (AuthenticationException e) {
-            return Response.unauthorized(e.getMessage());
-        } catch (AuctionClosedException | InvalidBidException e) {
-            return Response.error(e.getMessage());
         } catch (Exception e) {
-            System.err.println("[Handler] Unexpected error: " + e);
-            return Response.error("Server error: " + e.getMessage());
+            LOG.log(Level.WARNING, "Error handling message", e);
+            send(new Message(MessageType.ERROR, e.getMessage(), null));
         }
     }
 
-    // ── Request handlers ──────────────────────────────────────────────────────
-
-    private Response handleLogin(Request req) throws AuthenticationException {
-        LoginPayload p = (LoginPayload) req.getPayload();
-        String token = manager.login(p.getUsername(), p.getPasswordHash());
-        this.sessionToken = token; // lưu token cho session này
-        return Response.ok(token); // trả token về client
+    private void handleLogin(Message msg) throws IOException {
+        String[] creds = (String[]) msg.getPayload(); // [username, password]
+        try {
+            authenticatedUser = userService.login(creds[0], creds[1]);
+            send(new Message(MessageType.LOGIN_SUCCESS, authenticatedUser, authenticatedUser.getId()));
+        } catch (AuthenticationException e) {
+            send(new Message(MessageType.LOGIN_FAILURE, e.getMessage(), null));
+        }
     }
 
-    private Response handleLogout(Request req) {
-        manager.logout(sessionToken);
-        sessionToken = null;
-        return Response.ok("Logged out.");
+    private void handleRegister(Message msg) throws IOException {
+        Object[] data = (Object[]) msg.getPayload(); // [role, username, password, email, ...]
+        String role = (String) data[0];
+        try {
+            User user = switch (role) {
+                case "BIDDER" -> userService.registerBidder(
+                        (String) data[1], (String) data[2], (String) data[3],
+                        Double.parseDouble((String) data[4]));
+                case "SELLER" -> userService.registerSeller(
+                        (String) data[1], (String) data[2], (String) data[3]);
+                default -> throw new IllegalArgumentException("Unknown role: " + role);
+            };
+            send(new Message(MessageType.REGISTER_SUCCESS, user, user.getId()));
+        } catch (Exception e) {
+            send(new Message(MessageType.REGISTER_FAILURE, e.getMessage(), null));
+        }
     }
 
-    private Response handleRegister(Request req) throws AuthenticationException {
-        RegisterPayload p = (RegisterPayload) req.getPayload();
-        User user = manager.register(p.getUsername(), p.getPasswordHash(),
-                                     p.getEmail(), p.getRole());
-        return Response.ok(user);
+    private void handleGetAuctions(Message msg) throws IOException {
+        send(new Message(MessageType.AUCTION_LIST,
+                auctionService.getAllAuctions(), msg.getSessionToken()));
     }
 
-    private Response handleGetAllAuctions(Request req) {
-        List<Auction> list = manager.getAllAuctions();
-        return Response.ok(list);
+    private void handleGetDetail(Message msg) throws IOException {
+        String auctionId = (String) msg.getPayload();
+        Auction auction = auctionService.findById(auctionId).orElse(null);
+        send(new Message(MessageType.AUCTION_DETAIL, auction, msg.getSessionToken()));
     }
 
-    private Response handleGetAuctionById(Request req) throws InvalidBidException {
-        String auctionId = (String) req.getPayload();
-        Auction auction = manager.getAuction(auctionId);
-        if (auction == null) return Response.error("Auction not found: " + auctionId);
-        return Response.ok(auction);
+    private void handlePlaceBid(Message msg) throws IOException {
+        Object[] data = (Object[]) msg.getPayload(); // [auctionId, amount]
+        String auctionId = (String) data[0];
+        double amount    = (Double) data[1];
+
+        if (!(authenticatedUser instanceof Bidder bidder)) {
+            send(new Message(MessageType.BID_FAILURE, "Only bidders can place bids.", null));
+            return;
+        }
+        try {
+            Bid bid = bidService.placeBid(auctionId, bidder, amount);
+            send(new Message(MessageType.BID_SUCCESS, bid, msg.getSessionToken()));
+            // Broadcast updated auction to all clients
+            auctionService.findById(auctionId).ifPresent(a ->
+                    server.broadcast(new AuctionEvent(AuctionEvent.Type.BID_PLACED, a, bid)));
+        } catch (AuctionClosedException | InvalidBidException e) {
+            send(new Message(MessageType.BID_FAILURE, e.getMessage(), null));
+        }
     }
 
-    private Response handlePlaceBid(Request req)
-            throws AuthenticationException, AuctionClosedException, InvalidBidException {
-        BidPayload p = (BidPayload) req.getPayload();
-        // Dùng token từ Request (client gửi kèm) hoặc session token của handler
-        String token = req.getSessionToken() != null ? req.getSessionToken() : sessionToken;
-        Bid bid = manager.placeBid(token, p.getAuctionId(), p.getAmount());
-        return Response.ok(bid);
-    }
+    private void handleAutoBid(Message msg) throws IOException {
+        Object[] data = (Object[]) msg.getPayload(); // [auctionId, maxBid]
+        String auctionId = (String) data[0];
+        double maxBid    = (Double) data[1];
 
-    private Response handleCreateAuction(Request req)
-            throws AuthenticationException {
-        // payload = CreateAuctionPayload (tạo tương tự BidPayload nếu cần)
-        // Simplified: client gửi Auction object trực tiếp (thực tế nên dùng DTO)
-        Object payload = req.getPayload();
-        return Response.error("Use CreateAuctionPayload - implement when needed.");
-    }
-
-    private Response handleSubscribe(Request req) throws AuthenticationException {
-        String auctionId = (String) req.getPayload();
-        manager.subscribeToAuction(auctionId, this); // đăng ký this làm observer
-        return Response.ok("Subscribed to auction: " + auctionId);
-    }
-
-    private Response handleUnsubscribe(Request req) {
-        String auctionId = (String) req.getPayload();
-        manager.unsubscribeFromAuction(auctionId, this);
-        return Response.ok("Unsubscribed from: " + auctionId);
-    }
-
-    // ── AuctionObserver: REALTIME PUSH ────────────────────────────────────────
-
-    /**
-     * Được gọi bởi Auction khi có bid mới.
-     * Chạy trên auction thread → phải synchronized với out.
-     */
-    @Override
-    public void onBidPlaced(Auction auction, Bid newBid) {
-        sendResponse(Response.pushBidUpdate(auction));
-    }
-
-    /**
-     * Được gọi khi phiên đấu giá đóng.
-     */
-    @Override
-    public void onAuctionClosed(Auction auction) {
-        sendResponse(Response.pushAuctionClose(auction));
-    }
-
-    // ── I/O helpers ───────────────────────────────────────────────────────────
-
-    /**
-     * Gửi response về client.
-     * synchronized(outLock): tránh 2 thread ghi đồng thời vào ObjectOutputStream
-     * (reply thread + push thread có thể đồng thời).
-     */
-    private void sendResponse(Response response) {
-        synchronized (outLock) {
-            try {
-                out.writeObject(response);
-                out.flush();
-                // reset(): tránh ObjectOutputStream cache reference cũ
-                // (quan trọng khi gửi object đã thay đổi)
-                out.reset();
-            } catch (IOException e) {
-                System.err.println("[Handler] Send failed: " + e.getMessage());
+        if (!(authenticatedUser instanceof Bidder bidder)) {
+            send(new Message(MessageType.BID_FAILURE, "Only bidders can auto-bid.", null));
+            return;
+        }
+        try {
+            Bid bid = bidService.autoBid(auctionId, bidder, maxBid);
+            if (bid != null) {
+                send(new Message(MessageType.BID_SUCCESS, bid, msg.getSessionToken()));
+                auctionService.findById(auctionId).ifPresent(a ->
+                        server.broadcast(new AuctionEvent(AuctionEvent.Type.BID_PLACED, a, bid)));
+            } else {
+                send(new Message(MessageType.BID_FAILURE, "Max bid already exceeded.", null));
             }
+        } catch (AuctionClosedException | InvalidBidException e) {
+            send(new Message(MessageType.BID_FAILURE, e.getMessage(), null));
         }
     }
 
-    /** Dọn dẹp khi client ngắt kết nối */
-    private void cleanup() {
-        // Hủy tất cả subscription
-        manager.unsubscribeFromAll(this);
-        // Logout session
-        if (sessionToken != null) {
-            manager.logout(sessionToken);
+    private void handleCreateAuction(Message msg) throws IOException {
+        if (!(authenticatedUser instanceof Seller seller)) {
+            send(new Message(MessageType.ERROR, "Only sellers can create auctions.", null));
+            return;
         }
-        // Đóng socket
+        // Payload: Auction object already built on the client side
+        Auction auction = (Auction) msg.getPayload();
+        // Re-register through service so scheduling is applied
+        auctionService.createAuction(
+                seller,
+                auction.getItem(),
+                auction.getStartTime(),
+                auction.getEndTime(),
+                auction.getMinimumIncrement());
+        send(new Message(MessageType.AUCTION_CREATED, auction, msg.getSessionToken()));
+    }
+
+    private void handleCancelAuction(Message msg) throws IOException {
+        String auctionId = (String) msg.getPayload();
+        auctionService.cancelAuction(auctionId);
+        send(new Message(MessageType.AUCTION_UPDATE, auctionId, msg.getSessionToken()));
+    }
+
+    // ── I/O helpers ──────────────────────────────────────────────────────
+    public synchronized void sendEvent(AuctionEvent event) {
+        send(new Message(MessageType.AUCTION_UPDATE, event, null));
+    }
+
+    private synchronized void send(Message msg) {
+        try {
+            out.writeObject(msg);
+            out.flush();
+            out.reset(); // Prevent caching of mutable objects
+        } catch (IOException e) {
+            LOG.warning("Failed to send message: " + e.getMessage());
+        }
+    }
+
+    private void close() {
         try { socket.close(); } catch (IOException ignored) {}
     }
 }

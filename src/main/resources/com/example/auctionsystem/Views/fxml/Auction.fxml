@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="720.0"
+            prefWidth="1180.0"
+            stylesheets="@../css/style.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.bai_tap_lon.Controllers.AuctionController">
+
+    <top>
+
+        <VBox spacing="12.0"
+              styleClass="card">
+
+            <padding>
+                <Insets top="18.0"
+                        right="22.0"
+                        bottom="14.0"
+                        left="22.0"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT"
+                  spacing="16.0">
+
+                <VBox spacing="2.0"
+                      HBox.hgrow="ALWAYS">
+
+                    <Label text="Auction Dashboard"
+                           styleClass="page-title"/>
+
+                    <Label fx:id="messageLabel"
+                           text="San sang"
+                           styleClass="subtitle"/>
+
+                </VBox>
+
+                <Button text="Tai mau"
+                        onAction="#handleLoadSamples"
+                        styleClass="primary-button"/>
+
+            </HBox>
+
+            <fx:include fx:id="summaryView"
+                        source="AuctionSummary.fxml"/>
+
+        </VBox>
+
+    </top>
+
+    <center>
+
+        <SplitPane dividerPositions="0.66"
+                   style="-fx-background-color: transparent;">
+
+            <items>
+
+                <fx:include fx:id="tableView"
+                            source="AuctionTable.fxml"/>
+
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            style="-fx-background: transparent; -fx-background-color: transparent;">
+
+                    <content>
+
+                        <VBox spacing="12.0">
+
+                            <padding>
+                                <Insets top="0.0"
+                                        right="0.0"
+                                        bottom="0.0"
+                                        left="12.0"/>
+                            </padding>
+
+                            <fx:include fx:id="createView"
+                                        source="AuctionCreate.fxml"/>
+
+                            <fx:include fx:id="bidView"
+                                        source="AuctionBid.fxml"/>
+
+                            <fx:include fx:id="logView"
+                                        source="AuctionLog.fxml"/>
+
+                        </VBox>
+
+                    </content>
+
+                </ScrollPane>
+
+            </items>
+
+        </SplitPane>
+
+    </center>
+
+    <padding>
+        <Insets top="18.0"
+                right="18.0"
+                bottom="18.0"
+                left="18.0"/>
+    </padding>
+
+</BorderPane>

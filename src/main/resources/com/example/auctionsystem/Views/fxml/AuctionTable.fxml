@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="14.0"
+      alignment="TOP_LEFT"
+      style="
+          -fx-background-color: #ffffff;
+          -fx-background-radius: 14;
+          -fx-border-radius: 14;
+          -fx-border-color: #dbe3ef;
+          -fx-border-width: 1;
+      "
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.bai_tap_lon.Controllers.AuctionTableController">
+
+    <padding>
+        <Insets top="18.0" right="18.0" bottom="18.0" left="18.0"/>
+    </padding>
+
+    <children>
+
+        <!-- Title -->
+        <Label text="Danh sach phien dau gia"
+               style="
+                   -fx-font-size: 20px;
+                   -fx-font-weight: bold;
+                   -fx-text-fill: #172033;
+               "/>
+
+        <!-- Table -->
+        <TableView fx:id="auctionTable"
+                   prefHeight="520.0"
+                   VBox.vgrow="ALWAYS"
+                   style="
+                       -fx-background-color: white;
+                       -fx-border-color: #e4e9f2;
+                       -fx-border-radius: 10;
+                       -fx-background-radius: 10;
+                       -fx-table-cell-border-color: transparent;
+                   ">
+
+            <columns>
+
+                <TableColumn fx:id="idColumn"
+                             prefWidth="70.0"
+                             text="ID"/>
+
+                <TableColumn fx:id="itemColumn"
+                             prefWidth="180.0"
+                             text="San pham"/>
+
+                <TableColumn fx:id="categoryColumn"
+                             prefWidth="120.0"
+                             text="Loai"/>
+
+                <TableColumn fx:id="sellerColumn"
+                             prefWidth="140.0"
+                             text="Nguoi ban"/>
+
+                <TableColumn fx:id="statusColumn"
+                             prefWidth="110.0"
+                             text="Trang thai"/>
+
+                <TableColumn fx:id="currentBidColumn"
+                             prefWidth="130.0"
+                             text="Gia hien tai"/>
+
+                <TableColumn fx:id="startTimeColumn"
+                             prefWidth="160.0"
+                             text="Bat dau"/>
+
+                <TableColumn fx:id="endTimeColumn"
+                             prefWidth="160.0"
+                             text="Ket thuc"/>
+
+                <TableColumn fx:id="bidCountColumn"
+                             prefWidth="80.0"
+                             text="Luot"/>
+
+            </columns>
+
+        </TableView>
+
+    </children>
+
+</VBox>

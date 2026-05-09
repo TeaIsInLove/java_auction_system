@@ -14,6 +14,6 @@ module com.example.auctionsystem {
     requires java.sql;
     requires org.xerial.sqlitejdbc;
 
-    opens com.example.auctionsystem.Controllers to javafx.fxml;
-    exports com.example.auctionsystem;
+    opens com.example.bai_tap_lon.Controllers to javafx.fxml;
+    exports com.example.bai_tap_lon;
 }

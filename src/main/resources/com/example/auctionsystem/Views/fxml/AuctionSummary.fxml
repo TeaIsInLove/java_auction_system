@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox spacing="12.0"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.bai_tap_lon.Controllers.AuctionSummaryController">
+    <children>
+        <VBox prefWidth="190.0" spacing="3.0"
+              style="-fx-background-color: #ecfdf5; -fx-border-color: #a7f3d0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+            <Label text="Tong phien" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+            <Label fx:id="totalAuctionsLabel" text="0"
+                   style="-fx-font-size: 24px; -fx-font-weight: 700; -fx-text-fill: #064e3b;"/>
+        </VBox>
+        <VBox prefWidth="190.0" spacing="3.0"
+              style="-fx-background-color: #fff7ed; -fx-border-color: #fed7aa; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+            <Label text="Dang chay" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+            <Label fx:id="runningAuctionsLabel" text="0"
+                   style="-fx-font-size: 24px; -fx-font-weight: 700; -fx-text-fill: #9a3412;"/>
+        </VBox>
+        <VBox prefWidth="190.0" spacing="3.0"
+              style="-fx-background-color: #eff6ff; -fx-border-color: #bfdbfe; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+            <Label text="Cho mo" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+            <Label fx:id="openAuctionsLabel" text="0"
+                   style="-fx-font-size: 24px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8;"/>
+        </VBox>
+        <VBox prefWidth="230.0" spacing="3.0"
+              style="-fx-background-color: #fdf2f8; -fx-border-color: #fbcfe8; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12;">
+            <Label text="Gia cao nhat" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+            <Label fx:id="highestBidLabel" text="0.00"
+                   style="-fx-font-size: 24px; -fx-font-weight: 700; -fx-text-fill: #be185d;"/>
+        </VBox>
+    </children>
+</HBox>

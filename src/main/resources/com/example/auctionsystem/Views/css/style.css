@@ -1,0 +1,127 @@
+.root {
+    -fx-font-family: "Segoe UI";
+    -fx-background-color: linear-gradient(to bottom right, #dbeafe, #eff6ff);
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
+.container {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-padding: 30;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(0,0,0,0.12),
+        18,
+        0,
+        0,
+        4
+    );
+}
+
+/* =========================
+   TITLE
+========================= */
+
+.title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+
+    -fx-padding: 0 0 15 0;
+}
+
+/* =========================
+   INPUT
+========================= */
+
+.input {
+    -fx-pref-width: 280;
+    -fx-pref-height: 42;
+
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #cbd5e1;
+
+    -fx-font-size: 14px;
+
+    -fx-padding: 0 14 0 14;
+}
+
+.input:focused {
+    -fx-border-color: #2563eb;
+    -fx-background-color: white;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(37,99,235,0.20),
+        8,
+        0,
+        0,
+        0
+    );
+}
+
+/* =========================
+   PRIMARY BUTTON
+========================= */
+
+.primary-btn {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+
+    -fx-background-radius: 12;
+
+    -fx-pref-width: 200;
+    -fx-pref-height: 42;
+
+    -fx-cursor: hand;
+}
+
+.primary-btn:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+/* =========================
+   SECONDARY BUTTON
+========================= */
+
+.secondary-btn {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #1e293b;
+
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+
+    -fx-background-radius: 12;
+
+    -fx-pref-width: 200;
+    -fx-pref-height: 42;
+
+    -fx-cursor: hand;
+}
+
+.secondary-btn:hover {
+    -fx-background-color: #cbd5e1;
+}
+
+/* =========================
+   ERROR LABEL
+========================= */
+
+.error-label {
+    -fx-text-fill: #dc2626;
+    -fx-font-size: 13px;
+}
+.label {
+    -fx-text-fill: #111827;
+}

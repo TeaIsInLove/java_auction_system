@@ -1,29 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" maxWidth="420.0" spacing="14.0"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      stylesheets="@../css/style.css"
-      styleClass="vbox"
-      fx:controller="com.example.bai_tap_lon.Controllers.LoginController">
-    <padding>
-        <Insets bottom="28.0" left="28.0" right="28.0" top="28.0"/>
-    </padding>
+<StackPane
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.example.bai_tap_lon.Controllers.LoginController"
+        stylesheets="@../css/style.css"
 
-    <Label text="LOGIN" style="-fx-font-size: 22px; -fx-font-weight: 700;"/>
-    <TextField fx:id="usernameField" promptText="Email hoac admin"/>
-    <PasswordField fx:id="passwordField" promptText="Password"/>
-    <Label fx:id="messageLabel" textFill="#b91c1c"/>
+        alignment="CENTER"
 
+        prefWidth="900"
+        prefHeight="600"
 
+        style="
+            -fx-background-color:
+            linear-gradient(
+                to bottom right,
+                #bfdbfe,
+                #dbeafe,
+                #eff6ff
+            );
+        ">
 
-    <Button maxWidth="1.7976931348623157E308" onAction="#handleLogin" text="Login"/>
-    <Button maxWidth="1.7976931348623157E308" onAction="#goToRegister" text="Register"/>
-</VBox>
+    <VBox alignment="CENTER"
+          maxWidth="420.0"
+          spacing="14.0"
+          styleClass="container">
+
+        <padding>
+            <Insets top="40.0"
+                    right="40.0"
+                    bottom="40.0"
+                    left="40.0"/>
+        </padding>
+
+        <Label text="LOGIN"
+               styleClass="title"/>
+
+        <TextField fx:id="usernameField"
+                   promptText="Email or Username"
+                   styleClass="input"/>
+
+        <PasswordField fx:id="passwordField"
+                       promptText="Password"
+                       styleClass="input"/>
+
+        <Label fx:id="messageLabel"
+               styleClass="error-label"/>
+
+        <Button text="Login"
+                onAction="#handleLogin"
+                styleClass="primary-btn"/>
+
+        <Button text="Register"
+                onAction="#goToRegister"
+                styleClass="secondary-btn"/>
+
+    </VBox>
+
+</StackPane>

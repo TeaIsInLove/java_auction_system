@@ -16,6 +16,10 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.bai_tap_lon.Controllers.AuctionController">
 
+    <!-- =========================
+         TOP HEADER
+    ========================== -->
+
     <top>
 
         <VBox spacing="12.0"
@@ -56,19 +60,50 @@
 
     </top>
 
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
     <center>
 
-        <SplitPane dividerPositions="0.66"
+        <SplitPane dividerPositions="0.68"
                    style="-fx-background-color: transparent;">
 
             <items>
 
-                <fx:include fx:id="tableView"
-                            source="AuctionTable.fxml"/>
+                <!-- =========================
+                     LEFT: TABLE + HORIZONTAL SCROLL
+                ========================== -->
+
+                <ScrollPane fitToHeight="true"
+                            fitToWidth="false"
+                            hbarPolicy="AS_NEEDED"
+                            vbarPolicy="NEVER"
+                            pannable="true"
+                            style="
+                                -fx-background-color: transparent;
+                                -fx-background: transparent;
+                            ">
+
+                    <content>
+
+                        <fx:include fx:id="tableView"
+                                    source="AuctionTable.fxml"/>
+
+                    </content>
+
+                </ScrollPane>
+
+                <!-- =========================
+                     RIGHT PANEL
+                ========================== -->
 
                 <ScrollPane fitToWidth="true"
                             hbarPolicy="NEVER"
-                            style="-fx-background: transparent; -fx-background-color: transparent;">
+                            style="
+                                -fx-background-color: transparent;
+                                -fx-background: transparent;
+                            ">
 
                     <content>
 
@@ -101,6 +136,10 @@
         </SplitPane>
 
     </center>
+
+    <!-- =========================
+         OUTER PADDING
+    ========================== -->
 
     <padding>
         <Insets top="18.0"

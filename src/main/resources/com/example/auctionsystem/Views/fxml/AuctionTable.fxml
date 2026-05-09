@@ -53,35 +53,35 @@
 
                 <TableColumn fx:id="itemColumn"
                              prefWidth="180.0"
-                             text="San pham"/>
+                             text="Sản phẩm"/>
 
                 <TableColumn fx:id="categoryColumn"
                              prefWidth="120.0"
-                             text="Loai"/>
+                             text="Loại"/>
 
                 <TableColumn fx:id="sellerColumn"
                              prefWidth="140.0"
-                             text="Nguoi ban"/>
+                             text="Người bán"/>
 
                 <TableColumn fx:id="statusColumn"
                              prefWidth="110.0"
-                             text="Trang thai"/>
+                             text="Trạng thái"/>
 
                 <TableColumn fx:id="currentBidColumn"
                              prefWidth="130.0"
-                             text="Gia hien tai"/>
+                             text="Giá hiện tại"/>
 
                 <TableColumn fx:id="startTimeColumn"
                              prefWidth="160.0"
-                             text="Bat dau"/>
+                             text="Bắt đầu"/>
 
                 <TableColumn fx:id="endTimeColumn"
                              prefWidth="160.0"
-                             text="Ket thuc"/>
+                             text="Kết thúc"/>
 
                 <TableColumn fx:id="bidCountColumn"
                              prefWidth="80.0"
-                             text="Luot"/>
+                             text="Lượt"/>
 
             </columns>
 

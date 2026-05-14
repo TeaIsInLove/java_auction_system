@@ -2,6 +2,7 @@ package com.example.bai_tap_lon.Controllers;
 
 import com.example.bai_tap_lon.auth.AppUser;
 import com.example.bai_tap_lon.auth.AuthService;
+import com.example.bai_tap_lon.session.SessionManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -43,10 +44,13 @@ public class LoginController {
             showError("Sai tai khoan hoac mat khau.");
             return;
         }
+        AppUser user = currentUser.get();
+
+        SessionManager.getInstance().login(user.getUsername());
 
         try {
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            String view = "ADMIN".equalsIgnoreCase(currentUser.get().getRole())
+            String view = "ADMIN".equalsIgnoreCase(user.getRole())
                     ? "/com/example/auctionsystem/Views/fxml/List.fxml"
                     : "/com/example/auctionsystem/Views/fxml/Auction.fxml";
             Parent root = FXMLLoader.load(getClass().getResource(view));

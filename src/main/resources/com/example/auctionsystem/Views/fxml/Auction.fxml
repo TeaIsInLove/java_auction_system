@@ -3,149 +3,246 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="720.0"
-            prefWidth="1180.0"
-            stylesheets="@../css/style.css"
-            xmlns="http://javafx.com/javafx/21"
+<?import javafx.scene.control.ScrollPane?>
+<BorderPane prefHeight="800.0"
+            prefWidth="1400.0"
+            stylesheets="@../css/Dashboard.css"
+            xmlns="http://javafx.com/javafx/26"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.bai_tap_lon.Controllers.AuctionController">
 
-    <!-- =========================
-         TOP HEADER
-    ========================== -->
+    <!-- ================================================= -->
+    <!-- LEFT SIDEBAR -->
+    <!-- ================================================= -->
 
-    <top>
-
-        <VBox spacing="12.0"
-              styleClass="card">
+    <left>
+        <VBox prefWidth="260" spacing="18" styleClass="sidebar">
 
             <padding>
-                <Insets top="18.0"
-                        right="22.0"
-                        bottom="14.0"
-                        left="22.0"/>
+                <Insets bottom="25" left="20" right="20" top="25" />
             </padding>
 
-            <HBox alignment="CENTER_LEFT"
-                  spacing="16.0">
+            <!-- LOGO -->
+            <VBox spacing="6">
+                <Label styleClass="logo-text" text="AUCTION HUB" />
+                <Label styleClass="logo-sub" text="Hệ thống đấu giá trực tuyến" />
+            </VBox>
 
-                <VBox spacing="2.0"
-                      HBox.hgrow="ALWAYS">
+            <Separator />
 
-                    <Label text="Auction Dashboard"
-                           styleClass="page-title"/>
+            <!-- MENU -->
+            <VBox spacing="10">
 
-                    <Label fx:id="messageLabel"
-                           text="San sang"
-                           styleClass="subtitle"/>
+                <Button styleClass="menu-button" text="🏠  Trang chủ" />
 
-                </VBox>
+                <Button styleClass="menu-button" text="🔥  Đấu giá đang diễn ra" />
 
-                <Button text="Tai mau"
-                        onAction="#handleLoadSamples"
-                        styleClass="primary-button"/>
+                <Button styleClass="menu-button" text="📦  Danh sách đấu giá" />
 
-            </HBox>
+                <Button styleClass="menu-button" text="🕘  Lịch sử đấu giá" />
 
-            <fx:include fx:id="summaryView"
-                        source="AuctionSummary.fxml"/>
+                <Button text="Tạo phiên đấu giá"
+                        styleClass="menu-button"
+                        onAction="#handleOpenCreateAuction"/>
+
+                <Button styleClass="menu-button" text="💰  Sản phẩm đã thắng" />
+
+                <Button styleClass="menu-button" text="🔔  Thông báo" />
+
+                <Button styleClass="menu-button" text="⚙  Cài đặt" />
+
+            </VBox>
+
+            <VBox VBox.vgrow="ALWAYS" />
+
+            <!-- USER CARD -->
+            <VBox spacing="5" styleClass="user-card">
+
+                <Label styleClass="user-small" text="Xin chào," />
+
+                <Label fx:id="sidebarUsernameLabel" styleClass="user-name" />
+
+                <Button styleClass="logout-button" text="Đăng xuất" />
+
+            </VBox>
 
         </VBox>
+    </left>
 
-    </top>
-
-    <!-- =========================
-         MAIN CONTENT
-    ========================== -->
+    <!-- ================================================= -->
+    <!-- MAIN CONTENT -->
+    <!-- ================================================= -->
 
     <center>
 
-        <SplitPane dividerPositions="0.68"
-                   style="-fx-background-color: transparent;">
+        <VBox spacing="24" styleClass="main-container">
 
-            <items>
+            <padding>
+                <Insets bottom="25" left="25" right="25" top="25" />
+            </padding>
 
-                <!-- =========================
-                     LEFT: TABLE + HORIZONTAL SCROLL
-                ========================== -->
+            <!-- TOP BAR -->
+            <HBox alignment="CENTER_LEFT" spacing="15">
 
-                <ScrollPane fitToHeight="true"
-                            fitToWidth="false"
-                            hbarPolicy="AS_NEEDED"
-                            vbarPolicy="NEVER"
-                            pannable="true"
-                            style="
-                                -fx-background-color: transparent;
-                                -fx-background: transparent;
-                            ">
+                <VBox spacing="5">
+                    <Label styleClass="page-title" text="Dashboard" />
 
-                    <content>
+                    <Label styleClass="page-subtitle" text="Theo dõi các phiên đấu giá của bạn" />
+                </VBox>
 
-                        <fx:include fx:id="tableView"
-                                    source="AuctionTable.fxml"/>
+                <Region HBox.hgrow="ALWAYS" />
 
-                    </content>
+                <!-- SEARCH -->
+                <TextField prefWidth="280" promptText="Tìm kiếm phiên đấu giá..." styleClass="search-field" />
 
-                </ScrollPane>
+                <!-- USER -->
+                <HBox alignment="CENTER" spacing="10" styleClass="top-user-box">
 
-                <!-- =========================
-                     RIGHT PANEL
-                ========================== -->
+                    <Label styleClass="avatar-icon" text="👤" />
 
-                <ScrollPane fitToWidth="true"
-                            hbarPolicy="NEVER"
-                            style="
-                                -fx-background-color: transparent;
-                                -fx-background: transparent;
-                            ">
+                    <VBox spacing="2">
+                        <Label fx:id="topUsernameLabel" styleClass="top-username" />
 
-                    <content>
+                        <Label styleClass="top-role" text="Người tham gia" />
+                    </VBox>
 
-                        <VBox spacing="12.0">
+                </HBox>
 
-                            <padding>
-                                <Insets top="0.0"
-                                        right="0.0"
-                                        bottom="0.0"
-                                        left="12.0"/>
-                            </padding>
+            </HBox>
 
-                            <fx:include fx:id="createView"
-                                        source="AuctionCreate.fxml"/>
+            <!-- QUICK STATS -->
+            <HBox spacing="20">
 
-                            <fx:include fx:id="bidView"
-                                        source="AuctionBid.fxml"/>
+                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
 
-                            <fx:include fx:id="logView"
-                                        source="AuctionLog.fxml"/>
+                    <Label styleClass="stats-number" text="12" />
+
+                    <Label styleClass="stats-title" text="Phiên đang tham gia" />
+
+                    <Label styleClass="stats-extra green-text" text="+2 hôm nay" />
+                </VBox>
+
+                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
+
+                    <Label styleClass="stats-number" text="5" />
+
+                    <Label styleClass="stats-title" text="Đấu giá đã thắng" />
+
+                    <Label styleClass="stats-extra blue-text" text="Tháng này" />
+                </VBox>
+
+                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
+
+                    <Label styleClass="stats-number" text="145.000.000 đ" />
+
+                    <Label styleClass="stats-title" text="Tổng giá trị" />
+
+                    <Label styleClass="stats-extra orange-text" text="Sản phẩm đã mua" />
+                </VBox>
+
+                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
+
+                    <Label styleClass="stats-number" text="3" />
+
+                    <Label styleClass="stats-title" text="Sắp kết thúc" />
+
+                    <Label styleClass="stats-extra red-text" text="Trong 24 giờ" />
+                </VBox>
+
+            </HBox>
+
+            <!-- MAIN PANELS -->
+            <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+                <!-- LEFT CONTENT -->
+                <VBox spacing="20" HBox.hgrow="ALWAYS">
+
+                    <!-- LIVE AUCTIONS -->
+                    <VBox spacing="15" styleClass="content-card" VBox.vgrow="ALWAYS">
+
+                        <Label styleClass="section-title" text="Phiên đấu giá nổi bật" />
+
+                        <ScrollPane fitToWidth="true"
+                                    VBox.vgrow="ALWAYS"
+                                    styleClass="auction-scroll">
+
+                            <content>
+
+                                <VBox fx:id="auctionContainer"
+                                      spacing="15"
+                                      fillWidth="true"/>
+
+                            </content>
+
+                        </ScrollPane>
+
+                    </VBox>
+
+                </VBox>
+
+                <!-- RIGHT PANEL -->
+                <VBox prefWidth="320" spacing="20">
+
+                    <!-- RECENT ACTIVITY -->
+                    <VBox spacing="15" styleClass="content-card">
+
+                        <Label styleClass="section-title" text="Hoạt động gần đây" />
+
+                        <VBox spacing="12">
+
+                            <Label styleClass="activity-text" text="• Bạn đã đặt giá Macbook Pro" />
+
+                            <Label styleClass="activity-text" text="• Đấu giá iPhone tăng giá mới" />
+
+                            <Label styleClass="activity-text" text="• Bạn thắng phiên Apple Watch" />
+
+                            <Label styleClass="activity-text" text="• Phiên Camera sắp kết thúc" />
 
                         </VBox>
 
-                    </content>
+                    </VBox>
 
-                </ScrollPane>
+                    <!-- OVERVIEW -->
+                    <VBox spacing="15" styleClass="content-card">
 
-            </items>
+                        <Label styleClass="section-title" text="Tổng quan" />
 
-        </SplitPane>
+                        <HBox spacing="10">
+                            <Label text="✔" />
+                            <Label text="Tỷ lệ thắng: 68%" />
+                        </HBox>
+
+                        <HBox spacing="10">
+                            <Label text="✔" />
+                            <Label text="Phiên tham gia: 42" />
+                        </HBox>
+
+                        <HBox spacing="10">
+                            <Label text="✔" />
+                            <Label text="Sản phẩm đã mua: 15" />
+                        </HBox>
+
+                        <HBox spacing="10">
+                            <Label text="✔" />
+                            <Label text="Đang theo dõi: 9" />
+                        </HBox>
+
+                    </VBox>
+
+                </VBox>
+
+            </HBox>
+
+        </VBox>
 
     </center>
-
-    <!-- =========================
-         OUTER PADDING
-    ========================== -->
-
-    <padding>
-        <Insets top="18.0"
-                right="18.0"
-                bottom="18.0"
-                left="18.0"/>
-    </padding>
 
 </BorderPane>

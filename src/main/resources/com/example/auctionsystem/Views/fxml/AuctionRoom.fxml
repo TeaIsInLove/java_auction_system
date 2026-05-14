@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="820" prefWidth="1400"
+            stylesheets="@../css/AuctionRoom.css"
+            xmlns="http://javafx.com/javafx/26"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.bai_tap_lon.Controllers.AuctionRoomController">
+
+    <!-- ================================================= -->
+    <!-- TOP -->
+    <!-- ================================================= -->
+
+    <top>
+
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="top-bar">
+
+            <padding>
+                <Insets bottom="20" left="25" right="25" top="20" />
+            </padding>
+
+            <!-- PRODUCT IMAGE -->
+            <StackPane prefHeight="140" prefWidth="140" styleClass="image-box">
+
+                <Label styleClass="image-icon" text="📦" />
+
+            </StackPane>
+
+            <!-- PRODUCT INFO -->
+            <VBox spacing="10">
+
+                <Label styleClass="auction-title" text="Macbook Pro M4 Max 2025" />
+
+                <Label styleClass="auction-category" text="Laptop / Công nghệ" />
+
+                <HBox spacing="30">
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Giá hiện tại" />
+
+                        <Label styleClass="price-text" text="58.500.000 đ" />
+                    </VBox>
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Người dẫn đầu" />
+
+                        <Label styleClass="leader-text" text="NguyenVanA" />
+                    </VBox>
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Kết thúc sau" />
+
+                        <Label styleClass="timer-text" text="00 : 14 : 32" />
+                    </VBox>
+
+                </HBox>
+
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <!-- STATUS -->
+            <Label styleClass="live-badge" text="ĐANG DIỄN RA" />
+
+        </HBox>
+
+    </top>
+
+    <!-- ================================================= -->
+    <!-- CENTER -->
+    <!-- ================================================= -->
+
+    <center>
+
+        <HBox spacing="20" styleClass="main-content">
+
+            <padding>
+                <Insets bottom="20" left="25" right="25" top="20" />
+            </padding>
+
+            <!-- BID HISTORY -->
+            <VBox spacing="18" styleClass="panel-card" HBox.hgrow="ALWAYS">
+
+                <Label styleClass="section-title" text="Lịch sử đặt giá" />
+
+                <TableView fx:id="bidTable" styleClass="bid-table" VBox.vgrow="ALWAYS">
+
+                    <columns>
+
+                        <TableColumn prefWidth="220" text="Người dùng" />
+
+                        <TableColumn prefWidth="180" text="Giá đặt" />
+
+                        <TableColumn prefWidth="220" text="Thời gian" />
+
+                        <TableColumn prefWidth="180" text="Trạng thái" />
+
+                    </columns>
+
+                </TableView>
+
+            </VBox>
+
+            <!-- RIGHT PANEL -->
+            <VBox prefWidth="360" spacing="20">
+
+                <!-- BID PANEL -->
+                <VBox spacing="16" styleClass="panel-card">
+
+                    <Label styleClass="section-title" text="Đặt giá" />
+
+                    <VBox spacing="8">
+
+                        <Label styleClass="info-label" text="Giá tối thiểu tiếp theo" />
+
+                        <Label styleClass="next-price" text="59.000.000 đ" />
+                    </VBox>
+
+                    <TextField promptText="Nhập giá của bạn" styleClass="bid-input" />
+
+                    <Button maxWidth="Infinity" styleClass="bid-button" text="Đặt giá ngay" />
+
+                </VBox>
+
+                <!-- AUCTION INFO -->
+                <VBox spacing="14" styleClass="panel-card">
+
+                    <Label styleClass="section-title" text="Thông tin phiên" />
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label text="Bước giá: 500.000 đ" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label text="Tổng lượt bid: 42" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label text="Người tham gia: 18" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label text="Trạng thái: LIVE" textFill="WHITE" />
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+
+        </HBox>
+
+    </center>
+
+</BorderPane>

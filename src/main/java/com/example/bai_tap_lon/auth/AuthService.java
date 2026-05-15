@@ -27,7 +27,8 @@ public class AuthService {
             return false;
         }
 
-        AppUser user = new AppUser(fullName.trim(), PasswordUtil.hashPassword(password), normalizedEmail, "USER");
+        double initialBalance = 100_000_000.0; // 100 triệu VND
+        AppUser user = new AppUser(fullName.trim(), PasswordUtil.hashPassword(password), normalizedEmail, "USER", initialBalance);
         userRepository.save(user);
         return true;
     }

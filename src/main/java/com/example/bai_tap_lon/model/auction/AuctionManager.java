@@ -27,6 +27,10 @@ public class AuctionManager {
         activeAuctions.add(auction);
     }
 
+    public void removeAuction(Auction auction) {
+        activeAuctions.remove(auction);
+    }
+
     public List<Auction> getActiveAuctions() {
         return activeAuctions;
     }

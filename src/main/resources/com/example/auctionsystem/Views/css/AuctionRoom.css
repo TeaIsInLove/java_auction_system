@@ -62,6 +62,22 @@
     -fx-font-weight: bold;
 }
 
+.open-badge {
+    -fx-background-color: #64748b;
+    -fx-background-radius: 30;
+    -fx-padding: 12 24;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.ended-badge {
+    -fx-background-color: #334155;
+    -fx-background-radius: 30;
+    -fx-padding: 12 24;
+    -fx-text-fill: #e2e8f0;
+    -fx-font-weight: bold;
+}
+
 /* =======================================================
    CONTENT
 ======================================================= */
@@ -148,4 +164,18 @@
 
 .bid-button:hover {
     -fx-background-color: #1d4ed8;
+}
+
+.end-session-button {
+    -fx-background-color: #b91c1c;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 14;
+    -fx-padding: 14 18;
+    -fx-cursor: hand;
+}
+
+.end-session-button:hover {
+    -fx-background-color: #991b1b;
 }

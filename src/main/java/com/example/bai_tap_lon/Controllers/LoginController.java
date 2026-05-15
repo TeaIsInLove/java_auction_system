@@ -46,7 +46,7 @@ public class LoginController {
         }
         AppUser user = currentUser.get();
 
-        SessionManager.getInstance().login(user.getUsername());
+        SessionManager.getInstance().login(user);
 
         try {
             Stage stage = (Stage) usernameField.getScene().getWindow();

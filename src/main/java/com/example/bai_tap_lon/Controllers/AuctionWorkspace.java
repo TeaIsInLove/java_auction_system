@@ -1,5 +1,8 @@
 package com.example.bai_tap_lon.Controllers;
 
+import com.example.bai_tap_lon.auth.AuctionRepository;
+import com.example.bai_tap_lon.auth.BidRepository;
+import com.example.bai_tap_lon.auth.DatabaseManager;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionManager;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
@@ -12,6 +15,8 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +29,9 @@ public final class AuctionWorkspace {
     private static final DateTimeFormatter LOG_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final AuctionManager auctionManager = AuctionManager.getInstance();
+    private final DatabaseManager databaseManager = new DatabaseManager();
+    private final AuctionRepository auctionRepository = new AuctionRepository(databaseManager);
+    private final BidRepository bidRepository = new BidRepository(databaseManager);
     private final ObservableList<Auction> auctions = FXCollections.observableArrayList();
     private final ObjectProperty<Auction> selectedAuction = new SimpleObjectProperty<>();
     private final ObservableList<String> activityLogs = FXCollections.observableArrayList();
@@ -41,7 +49,7 @@ public final class AuctionWorkspace {
     public void initialize() {
         if (auctions.isEmpty()) {
             if (auctionManager.getActiveAuctions().isEmpty()) {
-                loadSampleAuctions();
+                loadAuctionsFromDatabase();
             } else {
                 syncFromManager();
             }
@@ -52,56 +60,23 @@ public final class AuctionWorkspace {
         }
     }
 
-    public void loadSampleAuctions() {
+    private void loadAuctionsFromDatabase() {
         auctionManager.getActiveAuctions().clear();
         activityLogs.clear();
 
-        LocalDateTime now = LocalDateTime.now();
-        Auction laptop = buildAuction(
-                "electronics",
-                "Laptop Gaming",
-                "Laptop hieu nang cao",
-                900.0,
-                now.minusHours(2),
-                now.plusDays(2),
-                "Tech Store",
-                "Acer"
-        );
-        laptop.startAuction();
-        addBidSilently(laptop, "minh", 1050.0);
-        addBidSilently(laptop, "linh", 1250.0);
-
-        Auction painting = buildAuction(
-                "art",
-                "Tranh Son Dau",
-                "Tac pham nghe thuat",
-                450.0,
-                now.plusHours(4),
-                now.plusDays(5),
-                "Gallery One",
-                "Nguyen Artist"
-        );
-
-        Auction motorbike = buildAuction(
-                "vehicle",
-                "Xe May Classic",
-                "Phuong tien suu tam",
-                1800.0,
-                now.minusDays(5),
-                now.minusHours(1),
-                "Auto House",
-                "Honda"
-        );
-        motorbike.startAuction();
-        addBidSilently(motorbike, "tuan", 2100.0);
-        addBidSilently(motorbike, "ha", 2320.0);
-        motorbike.endAuction();
-
-        auctionManager.getActiveAuctions().addAll(List.of(laptop, painting, motorbike));
+        List<Auction> loaded = auctionRepository.findAll();
+        for (Auction auction : loaded) {
+            auctionManager.addAuction(auction);
+        }
         syncFromManager();
-        selectedAuction.set(auctions.getFirst());
-        appendLog("San sang voi " + auctions.size() + " phien dau gia mau.");
-        showMessage("Da tai du lieu mau.", true);
+
+        if (auctions.isEmpty()) {
+            appendLog("Chua co phien dau gia trong co so du lieu.");
+            showMessage("Chua co phien dau gia. Hay tao phien moi.", true);
+        } else {
+            appendLog("Da tai " + auctions.size() + " phien tu co so du lieu.");
+            showMessage("Da tai du lieu phien dau gia.", true);
+        }
         touch();
     }
 
@@ -111,6 +86,7 @@ public final class AuctionWorkspace {
         Auction auction = buildAuction(type, itemName, description, startingPrice, startTime, endTime, sellerName, extraInfo);
         auctionManager.addAuction(auction);
         auctions.add(auction);
+        auctionRepository.insert(auction);
         selectedAuction.set(auction);
         appendLog("Tao phien moi: " + itemName + " - " + money(startingPrice));
         showMessage("Da tao phien dau gia moi.", true);
@@ -118,20 +94,37 @@ public final class AuctionWorkspace {
         return auction;
     }
 
-    public void startAuction(Auction auction) {
+    /** Người dùng hiện tại có phải chủ phiên (người bán / người tạo) không. */
+    public static boolean isAuctionSeller(Auction auction, String username) {
+        if (auction == null || auction.getSeller() == null || username == null) {
+            return false;
+        }
+        if (username.isBlank() || "Guest".equalsIgnoreCase(username.trim())) {
+            return false;
+        }
+        return auction.getSeller().getUsername().trim().equalsIgnoreCase(username.trim());
+    }
+
+    public boolean startAuction(Auction auction, String actorUsername) {
         if (auction == null) {
             showMessage("Chon mot phien dau gia trong bang.", false);
-            return;
+            return false;
+        }
+        if (!isAuctionSeller(auction, actorUsername)) {
+            showMessage("Chi nguoi tao phien moi duoc bat dau phien dau gia.", false);
+            return false;
         }
         if (auction.getStatus() != AuctionStatus.OPEN) {
             showMessage("Chi phien OPEN moi co the bat dau.", false);
-            return;
+            return false;
         }
 
         auction.startAuction();
+        auctionRepository.update(auction);
         appendLog("Bat dau phien: " + auction.getItem().getName());
         showMessage("Phien dau gia dang RUNNING.", true);
         touch();
+        return true;
     }
 
     public boolean placeBid(Auction auction, String bidderName, double amount) {
@@ -143,10 +136,20 @@ public final class AuctionWorkspace {
             showMessage("Nhap ten nguoi dat gia.", false);
             return false;
         }
+        if (isAuctionSeller(auction, bidderName.trim())) {
+            showMessage("Nguoi tao phien khong duoc tu dat gia vao phien cua minh.", false);
+            return false;
+        }
 
         try {
             Bidder bidder = new Bidder(bidderName.trim(), "", emailFromName(bidderName), 0.0);
-            auction.placeBid(new BidTransaction(bidder, amount));
+            BidTransaction bid = new BidTransaction(bidder, amount);
+            auction.placeBid(bid);
+
+            // Lưu bid vào database ngay lập tức
+            bidRepository.saveBid(auction.getId(), bid);
+
+            auctionRepository.update(auction);
             appendLog(bidder.getUsername() + " dat " + money(amount) + " cho " + auction.getItem().getName());
             showMessage("Da ghi nhan gia moi.", true);
             touch();
@@ -157,22 +160,47 @@ public final class AuctionWorkspace {
         }
     }
 
-    public void endAuction(Auction auction) {
+    public boolean endAuction(Auction auction, String actorUsername) {
         if (auction == null) {
             showMessage("Chon mot phien dau gia trong bang.", false);
-            return;
+            return false;
+        }
+        if (!isAuctionSeller(auction, actorUsername)) {
+            showMessage("Chi nguoi tao phien moi duoc ket thuc phien dau gia.", false);
+            return false;
         }
         if (auction.getStatus() == AuctionStatus.FINISHED
                 || auction.getStatus() == AuctionStatus.CANCELED
                 || auction.getStatus() == AuctionStatus.PAID) {
             showMessage("Phien nay da ket thuc.", false);
-            return;
+            return false;
         }
 
         auction.endAuction();
+        auctionRepository.update(auction);
         appendLog("Ket thuc phien " + auction.getItem().getName() + " voi trang thai " + auction.getStatus());
         showMessage("Da ket thuc phien dau gia.", true);
         touch();
+        return true;
+    }
+
+    public boolean deleteAuction(Auction auction, String username, boolean isAdmin) {
+        if (auction == null) {
+            showMessage("Chon mot phien dau gia de xoa.", false);
+            return false;
+        }
+        if (!isAdmin && !isAuctionSeller(auction, username)) {
+            showMessage("Chi admin hoac nguoi tao phien moi duoc xoa.", false);
+            return false;
+        }
+
+        auctionManager.removeAuction(auction);
+        auctions.remove(auction);
+        auctionRepository.delete(auction.getId());
+        appendLog("Da xoa phien: " + auction.getItem().getName());
+        showMessage("Da xoa phien dau gia.", true);
+        touch();
+        return true;
     }
 
     public void clearLogs() {
@@ -217,6 +245,18 @@ public final class AuctionWorkspace {
         return "$" + String.format(Locale.US, "%,.2f", value);
     }
 
+    /** Hiển thị số tiền VNĐ (không dùng ký hiệu khoa học), nhóm nghìn bằng dấu chấm. */
+    public static String formatVnd(double value) {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+        DecimalFormat df = new DecimalFormat("#,##0.##", symbols);
+        df.setGroupingUsed(true);
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(0);
+        return df.format(value);
+    }
+
     public static String dateTime(LocalDateTime value) {
         return value == null ? "" : value.format(DATE_TIME_FORMATTER);
     }
@@ -238,14 +278,6 @@ public final class AuctionWorkspace {
         Item item = ItemFactory.createItem(type, itemName, description, startingPrice, startTime, endTime, extraInfo);
         Seller seller = new Seller(sellerName, "", emailFromName(sellerName), sellerName);
         return new Auction(item, seller);
-    }
-
-    private void addBidSilently(Auction auction, String bidderName, double amount) {
-        try {
-            auction.placeBid(new BidTransaction(new Bidder(bidderName, "", emailFromName(bidderName), 0.0), amount));
-        } catch (Exception ignored) {
-            // Sample data is deterministic; ignore only keeps startup resilient if model rules change.
-        }
     }
 
     private String emailFromName(String name) {

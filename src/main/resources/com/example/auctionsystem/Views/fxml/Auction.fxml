@@ -3,21 +3,17 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.control.ScrollPane?>
-<BorderPane prefHeight="800.0"
-            prefWidth="1400.0"
-            stylesheets="@../css/Dashboard.css"
-            xmlns="http://javafx.com/javafx/26"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.bai_tap_lon.Controllers.AuctionController">
+<BorderPane prefHeight="800.0" prefWidth="1400.0" stylesheets="@../css/Dashboard.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.bai_tap_lon.Controllers.AuctionController">
 
     <!-- ================================================= -->
     <!-- LEFT SIDEBAR -->
@@ -32,8 +28,11 @@
 
             <!-- LOGO -->
             <VBox spacing="6">
-                <Label styleClass="logo-text" text="AUCTION HUB" />
-                <Label styleClass="logo-sub" text="Hệ thống đấu giá trực tuyến" />
+            <ImageView fitHeight="90.0" fitWidth="218.0">
+               <image>
+                  <Image url="@logo.png" />
+               </image>
+            </ImageView>
             </VBox>
 
             <Separator />
@@ -49,13 +48,11 @@
 
                 <Button styleClass="menu-button" text="🕘  Lịch sử đấu giá" />
 
-                <Button text="Tạo phiên đấu giá"
-                        styleClass="menu-button"
-                        onAction="#handleOpenCreateAuction"/>
+                <Button onAction="#handleOpenCreateAuction" styleClass="menu-button" text="Tạo phiên đấu giá" />
 
                 <Button styleClass="menu-button" text="💰  Sản phẩm đã thắng" />
 
-                <Button styleClass="menu-button" text="🔔  Thông báo" />
+                <Button onAction="#handleOpenProfile" styleClass="menu-button" text="👤  Thông tin cá nhân" />
 
                 <Button styleClass="menu-button" text="⚙  Cài đặt" />
 
@@ -70,7 +67,7 @@
 
                 <Label fx:id="sidebarUsernameLabel" styleClass="user-name" />
 
-                <Button styleClass="logout-button" text="Đăng xuất" />
+                <Button onAction="#handleLogout" styleClass="logout-button" text="Đăng xuất" />
 
             </VBox>
 
@@ -123,38 +120,17 @@
 
                 <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
 
-                    <Label styleClass="stats-number" text="12" />
+                    <Label fx:id="joinedAuctionLabel" styleClass="stats-number" />
 
                     <Label styleClass="stats-title" text="Phiên đang tham gia" />
 
-                    <Label styleClass="stats-extra green-text" text="+2 hôm nay" />
                 </VBox>
 
                 <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
 
-                    <Label styleClass="stats-number" text="5" />
+                    <Label fx:id="wonAuctionLabel" styleClass="stats-number" />
 
                     <Label styleClass="stats-title" text="Đấu giá đã thắng" />
-
-                    <Label styleClass="stats-extra blue-text" text="Tháng này" />
-                </VBox>
-
-                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
-
-                    <Label styleClass="stats-number" text="145.000.000 đ" />
-
-                    <Label styleClass="stats-title" text="Tổng giá trị" />
-
-                    <Label styleClass="stats-extra orange-text" text="Sản phẩm đã mua" />
-                </VBox>
-
-                <VBox spacing="10" styleClass="stats-card" HBox.hgrow="ALWAYS">
-
-                    <Label styleClass="stats-number" text="3" />
-
-                    <Label styleClass="stats-title" text="Sắp kết thúc" />
-
-                    <Label styleClass="stats-extra red-text" text="Trong 24 giờ" />
                 </VBox>
 
             </HBox>
@@ -170,15 +146,11 @@
 
                         <Label styleClass="section-title" text="Phiên đấu giá nổi bật" />
 
-                        <ScrollPane fitToWidth="true"
-                                    VBox.vgrow="ALWAYS"
-                                    styleClass="auction-scroll">
+                        <ScrollPane fitToWidth="true" styleClass="auction-scroll" VBox.vgrow="ALWAYS">
 
                             <content>
 
-                                <VBox fx:id="auctionContainer"
-                                      spacing="15"
-                                      fillWidth="true"/>
+                                <VBox fx:id="auctionContainer" fillWidth="true" spacing="15" />
 
                             </content>
 
@@ -198,13 +170,6 @@
 
                         <VBox spacing="12">
 
-                            <Label styleClass="activity-text" text="• Bạn đã đặt giá Macbook Pro" />
-
-                            <Label styleClass="activity-text" text="• Đấu giá iPhone tăng giá mới" />
-
-                            <Label styleClass="activity-text" text="• Bạn thắng phiên Apple Watch" />
-
-                            <Label styleClass="activity-text" text="• Phiên Camera sắp kết thúc" />
 
                         </VBox>
 

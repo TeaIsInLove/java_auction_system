@@ -3,6 +3,7 @@ package com.example.bai_tap_lon.Controllers;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
+import com.example.bai_tap_lon.session.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -30,7 +31,7 @@ public class AuctionBidController {
 
     @FXML
     private void handleStartAuction() {
-        workspace.startAuction(workspace.getSelectedAuction());
+        workspace.startAuction(workspace.getSelectedAuction(), SessionManager.getInstance().getUsername());
     }
 
     @FXML
@@ -49,13 +50,13 @@ public class AuctionBidController {
 
     @FXML
     private void handleEndAuction() {
-        workspace.endAuction(workspace.getSelectedAuction());
+        workspace.endAuction(workspace.getSelectedAuction(), SessionManager.getInstance().getUsername());
     }
 
     private void updateSelection(Auction auction) {
         if (auction == null) {
             selectedAuctionLabel.setText("Chua chon phien");
-            setButtonsDisabled(true, true, true);
+            setButtonsHiddenForNoAuction();
             return;
         }
 
@@ -74,16 +75,30 @@ public class AuctionBidController {
                         + " | Dan dau: " + winningBidder
         );
 
-        boolean canStart = auction.getStatus() == AuctionStatus.OPEN;
+        String me = SessionManager.getInstance().getUsername();
+        boolean host = AuctionWorkspace.isAuctionSeller(auction, me);
+
+        boolean showStart = host && auction.getStatus() == AuctionStatus.OPEN;
+        boolean showEnd = host && (auction.getStatus() == AuctionStatus.OPEN
+                || auction.getStatus() == AuctionStatus.RUNNING);
+        startButton.setVisible(showStart);
+        startButton.setManaged(showStart);
+        startButton.setDisable(!showStart);
+
+        endButton.setVisible(showEnd);
+        endButton.setManaged(showEnd);
+        endButton.setDisable(!showEnd);
+
         boolean canBid = auction.getStatus() == AuctionStatus.RUNNING;
-        boolean canEnd = auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING;
-        setButtonsDisabled(!canStart, !canBid, !canEnd);
+        bidButton.setDisable(!canBid);
     }
 
-    private void setButtonsDisabled(boolean startDisabled, boolean bidDisabled, boolean endDisabled) {
-        startButton.setDisable(startDisabled);
-        bidButton.setDisable(bidDisabled);
-        endButton.setDisable(endDisabled);
+    private void setButtonsHiddenForNoAuction() {
+        startButton.setVisible(false);
+        startButton.setManaged(false);
+        endButton.setVisible(false);
+        endButton.setManaged(false);
+        bidButton.setDisable(true);
     }
 
     private Double parseMoney(String value) {

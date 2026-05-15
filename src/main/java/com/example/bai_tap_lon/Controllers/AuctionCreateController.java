@@ -1,5 +1,6 @@
 package com.example.bai_tap_lon.Controllers;
 
+import com.example.bai_tap_lon.session.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -41,22 +42,38 @@ public class AuctionCreateController {
         endDatePicker.setValue(today.plusDays(7));
         startTimeField.setText("09:00");
         endTimeField.setText("18:00");
-        sellerField.setText("Default Seller");
+        if (SessionManager.getInstance().isLoggedIn()) {
+            sellerField.setText(SessionManager.getInstance().getUsername());
+            sellerField.setEditable(false);
+        } else {
+            sellerField.setText("Default Seller");
+            sellerField.setEditable(true);
+        }
     }
 
     public void setWorkspace(AuctionWorkspace workspace) {
         this.workspace = workspace;
+        if (SessionManager.getInstance().isLoggedIn()) {
+            sellerField.setText(SessionManager.getInstance().getUsername());
+            sellerField.setEditable(false);
+        }
     }
 
     @FXML
     private void handleCreateAuction() {
+        if (!SessionManager.getInstance().isLoggedIn()
+                || "Guest".equalsIgnoreCase(SessionManager.getInstance().getUsername())) {
+            workspace.showMessage("Vui long dang nhap de tao phien dau gia.", false);
+            return;
+        }
+
         String type = itemTypeCombo.getValue();
         String itemName = text(itemNameField);
-        String seller = text(sellerField);
+        String seller = SessionManager.getInstance().getUsername();
         String extraInfo = text(extraInfoField);
 
-        if (type == null || itemName.isEmpty() || seller.isEmpty()) {
-            workspace.showMessage("Nhap day du loai san pham, ten san pham va nguoi ban.", false);
+        if (type == null || itemName.isEmpty()) {
+            workspace.showMessage("Nhap day du loai san pham va ten san pham.", false);
             return;
         }
 
@@ -116,6 +133,9 @@ public class AuctionCreateController {
         startingPriceField.clear();
         extraInfoField.clear();
         itemTypeCombo.getSelectionModel().selectFirst();
+        if (SessionManager.getInstance().isLoggedIn()) {
+            sellerField.setText(SessionManager.getInstance().getUsername());
+        }
     }
 
     private void updateExtraInfoPrompt(String type) {

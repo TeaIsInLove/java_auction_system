@@ -52,6 +52,11 @@ public class Auction extends Entity implements AuctionSubject {
         }
     }
 
+    /** Khôi phục trạng thái khi đọc từ CSDL (không dùng cho luồng đấu giá trực tiếp). */
+    public void restorePersistedState(AuctionStatus persistedStatus) {
+        this.status = persistedStatus;
+    }
+
     // --- LOGIC ĐA LUỒNG: ĐẶT GIÁ ---
     public void placeBid(BidTransaction newBid) throws Exception {
         // Dùng khóa Lock để đảm bảo tại 1 mili-giây, chỉ có 1 người được chạy đoạn code xét giá này
@@ -76,6 +81,16 @@ public class Auction extends Entity implements AuctionSubject {
         } finally {
             // Luôn phải mở khóa trong khối finally để dù có lỗi xảy ra thì hệ thống không bị treo (Deadlock)
             lock.unlock();
+        }
+    }
+
+    /**
+     * Thêm bid từ database (không thông báo observers vì đây là dữ liệu cũ đã load).
+     */
+    public void addBidFromDatabase(BidTransaction bid) {
+        bidHistory.add(bid);
+        if (winningBid == null || bid.getBidAmount() > winningBid.getBidAmount()) {
+            winningBid = bid;
         }
     }
 

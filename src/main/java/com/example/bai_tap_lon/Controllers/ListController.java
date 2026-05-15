@@ -5,8 +5,11 @@ import com.example.bai_tap_lon.auth.DatabaseManager;
 import com.example.bai_tap_lon.auth.UserRepository;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.stage.Stage;
 
 public class ListController {
     @FXML private TableView<AppUser> tableView;
@@ -23,5 +26,16 @@ public class ListController {
         roleCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRole()));
 
         tableView.getItems().setAll(userRepository.findAll());
+    }
+
+    @FXML
+    public void handleOpenDashboard() {
+        try {
+            Stage stage = (Stage) tableView.getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/auctionsystem/Views/fxml/Auction.fxml"));
+            stage.setScene(new Scene(loader.load()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

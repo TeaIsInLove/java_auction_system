@@ -29,13 +29,14 @@ public class UserRepository {
     }
 
     public void save(AppUser user) {
-        String sql = "INSERT INTO users(full_name, email, password_hash, role) VALUES(?, ?, ?, ?)";
+        String sql = "INSERT INTO users(full_name, email, password_hash, role, balance) VALUES(?, ?, ?, ?, ?)";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, user.getUsername());
             statement.setString(2, user.getEmail());
             statement.setString(3, user.getPassword());
             statement.setString(4, user.getRole());
+            statement.setDouble(5, user.getBalance());
             statement.executeUpdate();
         } catch (SQLException ex) {
             throw new RuntimeException("Khong the luu user.", ex);
@@ -43,7 +44,7 @@ public class UserRepository {
     }
 
     public Optional<AppUser> findByEmail(String email) {
-        String sql = "SELECT full_name, email, password_hash, role FROM users WHERE email = ? LIMIT 1";
+        String sql = "SELECT full_name, email, password_hash, role, balance FROM users WHERE email = ? LIMIT 1";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, email);
@@ -55,7 +56,8 @@ public class UserRepository {
                         resultSet.getString("full_name"),
                         resultSet.getString("password_hash"),
                         resultSet.getString("email"),
-                        resultSet.getString("role")
+                        resultSet.getString("role"),
+                        resultSet.getDouble("balance")
                 ));
             }
         } catch (SQLException ex) {
@@ -64,7 +66,7 @@ public class UserRepository {
     }
 
     public List<AppUser> findAll() {
-        String sql = "SELECT full_name, email, password_hash, role FROM users ORDER BY created_at DESC";
+        String sql = "SELECT full_name, email, password_hash, role, balance FROM users ORDER BY created_at DESC";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
@@ -74,7 +76,8 @@ public class UserRepository {
                         resultSet.getString("full_name"),
                         resultSet.getString("password_hash"),
                         resultSet.getString("email"),
-                        resultSet.getString("role")
+                        resultSet.getString("role"),
+                        resultSet.getDouble("balance")
                 ));
             }
             return users;

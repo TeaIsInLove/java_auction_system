@@ -18,10 +18,6 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.bai_tap_lon.Controllers.AuctionRoomController">
 
-    <!-- ================================================= -->
-    <!-- TOP -->
-    <!-- ================================================= -->
-
     <top>
 
         <HBox alignment="CENTER_LEFT" spacing="20" styleClass="top-bar">
@@ -30,38 +26,31 @@
                 <Insets bottom="20" left="25" right="25" top="20" />
             </padding>
 
-            <!-- PRODUCT IMAGE -->
             <StackPane prefHeight="140" prefWidth="140" styleClass="image-box">
-
                 <Label styleClass="image-icon" text="📦" />
-
             </StackPane>
 
-            <!-- PRODUCT INFO -->
             <VBox spacing="10">
 
-                <Label styleClass="auction-title" text="Macbook Pro M4 Max 2025" />
+                <Label fx:id="titleLabel" styleClass="auction-title" text="" />
 
-                <Label styleClass="auction-category" text="Laptop / Công nghệ" />
+                <Label fx:id="categoryLabel" styleClass="auction-category" text="" />
 
                 <HBox spacing="30">
 
                     <VBox spacing="4">
                         <Label styleClass="info-label" text="Giá hiện tại" />
-
-                        <Label styleClass="price-text" text="58.500.000 đ" />
+                        <Label fx:id="currentPriceLabel" styleClass="price-text" text="" />
                     </VBox>
 
                     <VBox spacing="4">
                         <Label styleClass="info-label" text="Người dẫn đầu" />
-
-                        <Label styleClass="leader-text" text="NguyenVanA" />
+                        <Label fx:id="leaderLabel" styleClass="leader-text" text="" />
                     </VBox>
 
                     <VBox spacing="4">
                         <Label styleClass="info-label" text="Kết thúc sau" />
-
-                        <Label styleClass="timer-text" text="00 : 14 : 32" />
+                        <Label fx:id="timerLabel" styleClass="timer-text" text="" />
                     </VBox>
 
                 </HBox>
@@ -70,16 +59,11 @@
 
             <Region HBox.hgrow="ALWAYS" />
 
-            <!-- STATUS -->
-            <Label styleClass="live-badge" text="ĐANG DIỄN RA" />
+            <Label fx:id="statusBadgeLabel" styleClass="live-badge" text="" />
 
         </HBox>
 
     </top>
-
-    <!-- ================================================= -->
-    <!-- CENTER -->
-    <!-- ================================================= -->
 
     <center>
 
@@ -89,7 +73,6 @@
                 <Insets bottom="20" left="25" right="25" top="20" />
             </padding>
 
-            <!-- BID HISTORY -->
             <VBox spacing="18" styleClass="panel-card" HBox.hgrow="ALWAYS">
 
                 <Label styleClass="section-title" text="Lịch sử đặt giá" />
@@ -98,13 +81,13 @@
 
                     <columns>
 
-                        <TableColumn prefWidth="220" text="Người dùng" />
+                        <TableColumn fx:id="userColumn" prefWidth="220" text="Người dùng" />
 
-                        <TableColumn prefWidth="180" text="Giá đặt" />
+                        <TableColumn fx:id="amountColumn" prefWidth="180" text="Giá đặt" />
 
-                        <TableColumn prefWidth="220" text="Thời gian" />
+                        <TableColumn fx:id="timeColumn" prefWidth="220" text="Thời gian" />
 
-                        <TableColumn prefWidth="180" text="Trạng thái" />
+                        <TableColumn fx:id="bidStatusColumn" prefWidth="180" text="Trạng thái" />
 
                     </columns>
 
@@ -112,50 +95,57 @@
 
             </VBox>
 
-            <!-- RIGHT PANEL -->
             <VBox prefWidth="360" spacing="20">
 
-                <!-- BID PANEL -->
                 <VBox spacing="16" styleClass="panel-card">
 
                     <Label styleClass="section-title" text="Đặt giá" />
 
+                    <Button fx:id="startSessionButton" maxWidth="Infinity" onAction="#handleStartSession"
+                            styleClass="bid-button" text="Bắt đầu phiên đấu giá" />
+
+                    <Button fx:id="endSessionButton" maxWidth="Infinity" onAction="#handleEndSession"
+                            styleClass="end-session-button" text="Kết thúc phiên đấu giá" />
+
                     <VBox spacing="8">
-
                         <Label styleClass="info-label" text="Giá tối thiểu tiếp theo" />
-
-                        <Label styleClass="next-price" text="59.000.000 đ" />
+                        <Label fx:id="nextMinBidLabel" styleClass="next-price" text="" />
                     </VBox>
 
-                    <TextField promptText="Nhập giá của bạn" styleClass="bid-input" />
+                    <TextField fx:id="bidAmountField" promptText="Nhập giá của bạn" styleClass="bid-input" />
 
-                    <Button maxWidth="Infinity" styleClass="bid-button" text="Đặt giá ngay" />
+                    <Button fx:id="placeBidButton" maxWidth="Infinity" onAction="#handlePlaceBid"
+                            styleClass="bid-button" text="Đặt giá ngay" />
 
                 </VBox>
 
-                <!-- AUCTION INFO -->
                 <VBox spacing="14" styleClass="panel-card">
 
                     <Label styleClass="section-title" text="Thông tin phiên" />
 
                     <HBox spacing="10">
                         <Label text="✔" />
-                        <Label text="Bước giá: 500.000 đ" textFill="WHITE" />
+                        <Label fx:id="sellerNameLabel" textFill="WHITE" />
                     </HBox>
 
                     <HBox spacing="10">
                         <Label text="✔" />
-                        <Label text="Tổng lượt bid: 42" textFill="WHITE" />
+                        <Label fx:id="bidIncrementLabel" textFill="WHITE" />
                     </HBox>
 
                     <HBox spacing="10">
                         <Label text="✔" />
-                        <Label text="Người tham gia: 18" textFill="WHITE" />
+                        <Label fx:id="totalBidsLabel" textFill="WHITE" />
                     </HBox>
 
                     <HBox spacing="10">
                         <Label text="✔" />
-                        <Label text="Trạng thái: LIVE" textFill="WHITE" />
+                        <Label fx:id="participantsLabel" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="sessionStatusLabel" textFill="WHITE" />
                     </HBox>
 
                 </VBox>

@@ -43,13 +43,32 @@ public class Auction extends Entity implements AuctionSubject {
     }
 
     public void endAuction() {
-        this.status = AuctionStatus.FINISHED;
         if (winningBid != null) {
-            System.out.println("Phiên đấu giá kết thúc. Người thắng: " + winningBid.getBidder().getUsername());
+            this.status = AuctionStatus.FINISHED; // Có người thắng nhưng chưa thanh toán
+            System.out.println("Phiên đấu giá kết thúc. Người thắng: " + winningBid.getBidder().getUsername()
+                    + " với giá: $" + winningBid.getBidAmount());
         } else {
             this.status = AuctionStatus.CANCELED; // Không ai mua
             System.out.println("Phiên đấu giá bị hủy do không có người trả giá.");
         }
+    }
+
+    /**
+     * Hủy phiên đấu giá (chỉ khi chưa có ai bid)
+     */
+    public void cancelAuction() {
+        if (bidHistory.isEmpty()) {
+            this.status = AuctionStatus.CANCELED;
+            System.out.println("Phiên đấu giá đã bị hủy: " + item.getName());
+        }
+    }
+
+    /**
+     * Đánh dấu phiên đấu giá là đã thanh toán
+     */
+    public void markAsPaid() {
+        this.status = AuctionStatus.PAID;
+        System.out.println("Phiên đấu giá đã được thanh toán: " + item.getName());
     }
 
     /** Khôi phục trạng thái khi đọc từ CSDL (không dùng cho luồng đấu giá trực tiếp). */

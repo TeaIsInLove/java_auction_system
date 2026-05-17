@@ -11,6 +11,10 @@ import java.util.Optional;
 public class UserRepository {
     private final DatabaseManager databaseManager;
 
+    public UserRepository() {
+        this.databaseManager = new DatabaseManager();
+    }
+
     public UserRepository(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }
@@ -83,6 +87,58 @@ public class UserRepository {
             return users;
         } catch (SQLException ex) {
             throw new RuntimeException("Khong the doc danh sach user.", ex);
+        }
+    }
+
+    public Optional<AppUser> findByUsername(String username) {
+        String sql = "SELECT full_name, email, password_hash, role, balance FROM users WHERE full_name = ? LIMIT 1";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new AppUser(
+                        resultSet.getString("full_name"),
+                        resultSet.getString("password_hash"),
+                        resultSet.getString("email"),
+                        resultSet.getString("role"),
+                        resultSet.getDouble("balance")
+                ));
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the doc user theo ten.", ex);
+        }
+    }
+
+    public void updateBalance(String username, double newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE full_name = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, newBalance);
+            statement.setString(2, username);
+            int rows = statement.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Khong tim thay user: " + username);
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the cap nhat so du.", ex);
+        }
+    }
+
+    public void updateBalanceByEmail(String email, double newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE email = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, newBalance);
+            statement.setString(2, email);
+            int rows = statement.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Khong tim thay user voi email: " + email);
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the cap nhat so du theo email.", ex);
         }
     }
 }

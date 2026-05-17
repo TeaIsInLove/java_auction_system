@@ -9,6 +9,7 @@ module com.example.auctionsystem {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
+    requires eu.hansolo.fx.countries;
     requires com.almasb.fxgl.all;
     requires java.naming;
     requires java.sql;

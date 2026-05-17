@@ -34,7 +34,7 @@ public class LoginController {
             currentUser = Optional.of(new AppUser("admin", "", "admin@local", "ADMIN"));
         } else if ("tester".equalsIgnoreCase(usernameOrEmail) && "123".equals(password)) {
             currentUser = Optional.of(
-                    new AppUser("tester", "", "tester@local", "USER")
+                    new AppUser("tester", "", "tester@local", "USER", 999999999)
             );
         } else {
             currentUser = authService.login(usernameOrEmail, password);

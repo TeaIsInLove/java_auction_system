@@ -1,12 +1,11 @@
 package com.example.bai_tap_lon.Controllers;
 
-import com.example.bai_tap_lon.auth.AuctionRepository;
-import com.example.bai_tap_lon.auth.BidRepository;
-import com.example.bai_tap_lon.auth.DatabaseManager;
+import com.example.bai_tap_lon.auth.*;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionManager;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
+import com.example.bai_tap_lon.model.entity.PaymentTransaction;
 import com.example.bai_tap_lon.model.entity.item.Item;
 import com.example.bai_tap_lon.model.entity.item.ItemFactory;
 import com.example.bai_tap_lon.model.entity.user.Bidder;
@@ -32,6 +31,8 @@ public final class AuctionWorkspace {
     private final DatabaseManager databaseManager = new DatabaseManager();
     private final AuctionRepository auctionRepository = new AuctionRepository(databaseManager);
     private final BidRepository bidRepository = new BidRepository(databaseManager);
+    private final UserRepository userRepository = new UserRepository(databaseManager);
+    private final PaymentRepository paymentRepository = new PaymentRepository(databaseManager);
     private final ObservableList<Auction> auctions = FXCollections.observableArrayList();
     private final ObjectProperty<Auction> selectedAuction = new SimpleObjectProperty<>();
     private final ObservableList<String> activityLogs = FXCollections.observableArrayList();
@@ -40,6 +41,8 @@ public final class AuctionWorkspace {
     private final LongProperty revision = new SimpleLongProperty();
 
     private AuctionWorkspace() {
+        // Khởi tạo bảng payment_transactions nếu chưa có
+        paymentRepository.initializeTable();
     }
 
     public static AuctionWorkspace getInstance() {
@@ -141,8 +144,20 @@ public final class AuctionWorkspace {
             return false;
         }
 
+        String bidderEmail = emailFromName(bidderName.trim());
+
+        // KIỂM TRA SỐ DƯ TRƯỚC KHI CHO PHÉP BID
+        // Chỉ kiểm tra nếu user đã tồn tại trong database
+        double currentBalance = getUserBalanceByEmail(bidderEmail);
+        if (currentBalance > 0 && currentBalance < amount) {
+            String msg = String.format("So du khong du! Can: %s, Ban co: %s", money(amount), money(currentBalance));
+            showMessage(msg, false);
+            appendLog("Loi: " + bidderName + " khong du tien de dat gia " + money(amount));
+            return false;
+        }
+
         try {
-            Bidder bidder = new Bidder(bidderName.trim(), "", emailFromName(bidderName), 0.0);
+            Bidder bidder = new Bidder(bidderName.trim(), "", bidderEmail, currentBalance);
             BidTransaction bid = new BidTransaction(bidder, amount);
             auction.placeBid(bid);
 
@@ -151,7 +166,7 @@ public final class AuctionWorkspace {
 
             auctionRepository.update(auction);
             appendLog(bidder.getUsername() + " dat " + money(amount) + " cho " + auction.getItem().getName());
-            showMessage("Da ghi nhan gia moi.", true);
+            showMessage("Da ghi nhan gia moi: " + money(amount), true);
             touch();
             return true;
         } catch (Exception ex) {
@@ -169,19 +184,263 @@ public final class AuctionWorkspace {
             showMessage("Chi nguoi tao phien moi duoc ket thuc phien dau gia.", false);
             return false;
         }
-        if (auction.getStatus() == AuctionStatus.FINISHED
-                || auction.getStatus() == AuctionStatus.CANCELED
-                || auction.getStatus() == AuctionStatus.PAID) {
+        // Chỉ kiểm tra CANCELED vì FINISHED không còn được dùng nữa (dùng PAID)
+        if (auction.getStatus() == AuctionStatus.PAID
+                || auction.getStatus() == AuctionStatus.CANCELED) {
             showMessage("Phien nay da ket thuc.", false);
             return false;
         }
+        // Không cho phép kết thúc phiên đang ở trạng thái OPEN (chưa bắt đầu)
+        if (auction.getStatus() == AuctionStatus.OPEN) {
+            showMessage("Phien chua bat dau. Vui long bat dau phien truoc.", false);
+            return false;
+        }
 
+        // Lấy thông tin người thắng và số tiền trước khi kết thúc
+        BidTransaction winningBid = auction.getWinningBid();
+        String itemName = auction.getItem().getName();
+        String sellerName = auction.getSeller().getUsername();
+
+        // Kết thúc phiên đấu giá
         auction.endAuction();
         auctionRepository.update(auction);
-        appendLog("Ket thuc phien " + auction.getItem().getName() + " voi trang thai " + auction.getStatus());
-        showMessage("Da ket thuc phien dau gia.", true);
+        appendLog("========================================");
+        appendLog("KET THUC PHIEN: " + itemName);
+        appendLog("Nguoi ban: " + sellerName);
+        appendLog("========================================");
+
+        // Xử lý thanh toán nếu có người thắng
+        if (winningBid != null) {
+            double bidAmount = winningBid.getBidAmount();
+            String winnerName = winningBid.getBidder().getUsername();
+            String winnerEmail = winningBid.getBidder().getEmail();
+
+            boolean success = processPayment(
+                auction.getId(), itemName,
+                winnerName, winnerEmail,
+                sellerName, auction.getSeller().getEmail(),
+                bidAmount
+            );
+
+            if (success) {
+                appendLog("----------------------------------------");
+                appendLog("PHIEN DA KET THUC THANH CONG!");
+                appendLog("Nguoi thang: " + winnerName);
+                appendLog("So tien: " + money(bidAmount));
+                appendLog("----------------------------------------");
+                showMessage("Thanh toan thanh cong! " + winnerName + " tra " + money(bidAmount) + " cho " + sellerName, true);
+            } else {
+                appendLog("----------------------------------------");
+                appendLog("PHIEN KET THUC - LOI THANH TOAN!");
+                appendLog("----------------------------------------");
+            }
+        } else {
+            appendLog("----------------------------------------");
+            appendLog("PHIEN KET THUC - KHONG CO NGUOI THANG");
+            appendLog("----------------------------------------");
+            showMessage("Phien dau gia ket thuc. Khong co nguoi thang cuoc.", true);
+        }
+
+        appendLog("Trang thai: " + auction.getStatus());
         touch();
         return true;
+    }
+
+    /**
+     * Xử lý thanh toán: Trừ tiền người mua, cộng tiền người bán, lưu transaction
+     * @return true nếu thanh toán thành công, false nếu thất bại
+     */
+    private boolean processPayment(String auctionId, String auctionName,
+                                String buyerName, String buyerEmail,
+                                String sellerName, String sellerEmail,
+                                double amount) {
+        try {
+            appendLog("Bat dau xu ly thanh toan...");
+            appendLog("So tien: " + money(amount));
+
+            // 1. Lấy số dư hiện tại của người mua từ database (tìm bằng username)
+            double buyerBalance = userRepository.findByUsername(buyerName)
+                    .map(AppUser::getBalance)
+                    .orElse(0.0);
+            boolean buyerExists = userRepository.findByUsername(buyerName).isPresent();
+            appendLog("So du nguoi mua (" + buyerName + "): " + money(buyerBalance));
+
+            // 2. Kiểm tra người mua có đủ tiền không
+            // Nếu buyer chưa có trong DB (số dư = 0), coi như có đủ tiền (trường hợp test)
+            if (buyerExists && buyerBalance < amount) {
+                appendLog("LOI: Nguoi mua khong du tien!");
+                appendLog("Can: " + money(amount) + " | Co: " + money(buyerBalance));
+                showMessage("Nguoi thang cuoc khong du tien trong tai khoan!", false);
+                return false;
+            }
+
+            // 3. Trừ tiền người mua (chỉ trừ nếu có trong database)
+            double newBuyerBalance = buyerBalance;
+            if (buyerExists) {
+                newBuyerBalance = buyerBalance - amount;
+                userRepository.updateBalance(buyerName, newBuyerBalance);
+                appendLog("Da tru tien nguoi mua: " + money(amount));
+                appendLog("So du con lai (" + buyerName + "): " + money(newBuyerBalance));
+            } else {
+                appendLog("Nguoi mua chua co trong DB - khong tru tien");
+            }
+
+            // 4. Lấy số dư hiện tại của người bán (tìm bằng username)
+            double sellerBalance = userRepository.findByUsername(sellerName)
+                    .map(AppUser::getBalance)
+                    .orElse(0.0);
+            boolean sellerExists = userRepository.findByUsername(sellerName).isPresent();
+            appendLog("So du nguoi ban (" + sellerName + "): " + money(sellerBalance));
+
+            // 5. Cộng tiền người bán (chỉ cộng nếu có trong database)
+            double newSellerBalance = sellerBalance;
+            if (sellerExists) {
+                newSellerBalance = sellerBalance + amount;
+                userRepository.updateBalance(sellerName, newSellerBalance);
+                appendLog("Da cong tien nguoi ban: " + money(amount));
+                appendLog("So du moi (" + sellerName + "): " + money(newSellerBalance));
+            } else {
+                appendLog("Nguoi ban chua co trong DB - khong cong tien");
+            }
+
+            // 6. Tạo và lưu payment transaction
+            PaymentTransaction transaction = new PaymentTransaction(
+                    auctionId, auctionName,
+                    buyerName, buyerEmail,
+                    sellerName, sellerEmail,
+                    amount
+            );
+            paymentRepository.save(transaction);
+            appendLog("Da luu giao dich thanh toan");
+
+            System.out.println("===========================================");
+            System.out.println("THANH TOAN THANH CONG!");
+            System.out.println("  Nguoi mua: " + buyerName);
+            if (buyerExists) {
+                System.out.println("  Bi tru: " + money(amount));
+                System.out.println("  So du con: " + money(newBuyerBalance));
+            } else {
+                System.out.println("  (Khong tru tien - chua co trong DB)");
+            }
+            System.out.println("  ---");
+            System.out.println("  Nguoi ban: " + sellerName);
+            System.out.println("  Duoc cong: " + money(amount));
+            System.out.println("  So du moi: " + money(newSellerBalance));
+            System.out.println("===========================================");
+
+            return true;
+
+        } catch (Exception ex) {
+            appendLog("LOI: " + ex.getMessage());
+            System.err.println("Loi xu ly thanh toan: " + ex.getMessage());
+            ex.printStackTrace();
+            showMessage("Da xay ra loi khi xu ly thanh toan!", false);
+            return false;
+        }
+    }
+
+    /**
+     * Lấy số dư của một user từ database
+     */
+    public double getUserBalance(String username) {
+        try {
+            return userRepository.findByUsername(username)
+                    .map(AppUser::getBalance)
+                    .orElse(0.0);
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay so du: " + ex.getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Lấy số dư của một user từ email
+     */
+    public double getUserBalanceByEmail(String email) {
+        try {
+            return userRepository.findByEmail(email)
+                    .map(AppUser::getBalance)
+                    .orElse(0.0);
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay so du: " + ex.getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Lấy lịch sử giao dịch thanh toán của một phiên đấu giá
+     */
+    public List<PaymentTransaction> getPaymentHistoryByAuction(String auctionId) {
+        try {
+            return paymentRepository.findByAuctionId(auctionId);
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay lich su thanh toan: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Lấy lịch sử giao dịch của một người dùng (với tư cách người mua)
+     */
+    public List<PaymentTransaction> getPaymentHistoryByBuyer(String buyerUsername) {
+        try {
+            return paymentRepository.findByBuyer(buyerUsername);
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay lich su mua hang: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Lấy lịch sử giao dịch của một người dùng (với tư cách người bán)
+     */
+    public List<PaymentTransaction> getPaymentHistoryBySeller(String sellerUsername) {
+        try {
+            return paymentRepository.findBySeller(sellerUsername);
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay lich su ban hang: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Lấy toàn bộ lịch sử giao dịch
+     */
+    public List<PaymentTransaction> getAllPaymentHistory() {
+        try {
+            return paymentRepository.findAll();
+        } catch (Exception ex) {
+            System.err.println("Loi khi lay tat ca lich su thanh toan: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Lấy tổng số tiền đã kiếm được của một người bán
+     */
+    public double getTotalEarnings(String sellerUsername) {
+        try {
+            return paymentRepository.findBySeller(sellerUsername).stream()
+                    .mapToDouble(PaymentTransaction::getAmount)
+                    .sum();
+        } catch (Exception ex) {
+            System.err.println("Loi khi tinh tong thu nhap: " + ex.getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Lấy tổng số tiền đã chi tiêu của một người mua
+     */
+    public double getTotalSpending(String buyerUsername) {
+        try {
+            return paymentRepository.findByBuyer(buyerUsername).stream()
+                    .mapToDouble(PaymentTransaction::getAmount)
+                    .sum();
+        } catch (Exception ex) {
+            System.err.println("Loi khi tinh tong chi tieu: " + ex.getMessage());
+            return 0.0;
+        }
     }
 
     public boolean deleteAuction(Auction auction, String username, boolean isAdmin) {
@@ -199,6 +458,60 @@ public final class AuctionWorkspace {
         auctionRepository.delete(auction.getId());
         appendLog("Da xoa phien: " + auction.getItem().getName());
         showMessage("Da xoa phien dau gia.", true);
+        touch();
+        return true;
+    }
+
+    /**
+     * Hủy một phiên đấu giá (chỉ khi chưa có ai bid)
+     */
+    public boolean cancelAuction(String auctionId) {
+        Auction auction = auctions.stream()
+                .filter(a -> a.getId().equals(auctionId))
+                .findFirst()
+                .orElse(null);
+
+        if (auction == null) {
+            showMessage("Khong tim thay phien dau gia.", false);
+            return false;
+        }
+
+        if (!auction.getBidHistory().isEmpty()) {
+            showMessage("Khong the huy phien da co nguoi dat gia.", false);
+            return false;
+        }
+
+        auction.cancelAuction();
+        auctionRepository.update(auction);
+        appendLog("Da huy phien: " + auction.getItem().getName());
+        showMessage("Da huy phien dau gia.", true);
+        touch();
+        return true;
+    }
+
+    /**
+     * Đánh dấu phiên đấu giá là đã thanh toán
+     */
+    public boolean markAsPaid(String auctionId) {
+        Auction auction = auctions.stream()
+                .filter(a -> a.getId().equals(auctionId))
+                .findFirst()
+                .orElse(null);
+
+        if (auction == null) {
+            showMessage("Khong tim thay phien dau gia.", false);
+            return false;
+        }
+
+        if (auction.getStatus() != AuctionStatus.FINISHED) {
+            showMessage("Chi phien da ket thuc moi co the danh dau thanh toan.", false);
+            return false;
+        }
+
+        auction.markAsPaid();
+        auctionRepository.update(auction);
+        appendLog("Da xac nhan thanh toan cho phien: " + auction.getItem().getName());
+        showMessage("Da xac nhan thanh toan.", true);
         touch();
         return true;
     }

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="18.0"
+      prefWidth="600.0"
+      stylesheets="@../css/style.css"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.bai_tap_lon.Controllers.AuctionCreateController">
+
+    <padding>
+        <Insets top="30.0"
+                right="30.0"
+                bottom="30.0"
+                left="30.0"/>
+    </padding>
+
+    <children>
+
+        <!-- Header -->
+
+        <VBox spacing="4.0">
+
+            <Label text="Tạo phiên đấu giá"
+                   styleClass="dashboard-title"/>
+
+            <Label text="Đăng sản phẩm mới lên hệ thống"
+                   styleClass="dashboard-subtitle"/>
+
+        </VBox>
+
+        <!-- Form -->
+
+        <GridPane hgap="12.0"
+                  vgap="14.0">
+
+            <columnConstraints>
+                <ColumnConstraints minWidth="110.0"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <children>
+
+                <Label text="Danh mục"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="0"/>
+
+                <ComboBox fx:id="itemTypeCombo"
+                          maxWidth="1.7976931348623157E308"
+                          promptText="Chọn loại"
+                          styleClass="dashboard-input"
+                          GridPane.columnIndex="1"
+                          GridPane.rowIndex="0"/>
+
+                <Label text="Sản phẩm"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="1"/>
+
+                <TextField fx:id="itemNameField"
+                           promptText="Tên sản phẩm"
+                           styleClass="dashboard-input"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="1"/>
+
+                <Label text="Mô tả"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="2"/>
+
+                <TextArea fx:id="descriptionArea"
+                          prefRowCount="4"
+                          promptText="Mô tả ngắn..."
+                          wrapText="true"
+                          styleClass="dashboard-area"
+                          GridPane.columnIndex="1"
+                          GridPane.rowIndex="2"/>
+
+                <Label text="Giá khởi điểm"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="3"/>
+
+                <TextField fx:id="startingPriceField"
+                           promptText="1000000"
+                           styleClass="dashboard-input"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="3"/>
+
+                <Label text="Người bán"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="4"/>
+
+                <TextField fx:id="sellerField"
+                           editable="false"
+                           promptText="Seller username"
+                           styleClass="dashboard-input"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="4"/>
+
+                <Label text="Thông tin thêm"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="5"/>
+
+                <TextField fx:id="extraInfoField"
+                           promptText="Thông tin bổ sung"
+                           styleClass="dashboard-input"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="5"/>
+
+                <Label text="Bắt đầu"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="6"/>
+
+                <HBox spacing="10.0"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="6">
+
+                    <DatePicker fx:id="startDatePicker"
+                                styleClass="dashboard-input"
+                                HBox.hgrow="ALWAYS"/>
+
+                    <TextField fx:id="startTimeField"
+                               prefWidth="85.0"
+                               promptText="09:00"
+                               styleClass="dashboard-input"/>
+
+                </HBox>
+
+                <Label text="Kết thúc"
+                       styleClass="form-label"
+                       GridPane.columnIndex="0"
+                       GridPane.rowIndex="7"/>
+
+                <HBox spacing="10.0"
+                      GridPane.columnIndex="1"
+                      GridPane.rowIndex="7">
+
+                    <DatePicker fx:id="endDatePicker"
+                                styleClass="dashboard-input"
+                                HBox.hgrow="ALWAYS"/>
+
+                    <TextField fx:id="endTimeField"
+                               prefWidth="85.0"
+                               promptText="18:00"
+                               styleClass="dashboard-input"/>
+
+                </HBox>
+
+            </children>
+
+        </GridPane>
+
+        <!-- Buttons -->
+
+        <HBox alignment="CENTER_RIGHT"
+              spacing="10.0">
+
+            <Button text="Làm mới"
+                    onAction="#handleClearForm"
+                    styleClass="secondary-button"/>
+
+            <Button text="Tạo phiên"
+                    onAction="#handleCreateAuction"
+                    styleClass="primary-button"/>
+
+        </HBox>
+
+    </children>
+
+</VBox>

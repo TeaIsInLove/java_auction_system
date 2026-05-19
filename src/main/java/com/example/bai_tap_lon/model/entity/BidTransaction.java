@@ -21,6 +21,11 @@ public class BidTransaction extends Entity {
     public double getBidAmount() { return bidAmount; }
     public LocalDateTime getBidTime() { return bidTime; }
 
+    // Setters for loading from database
+    public void setBidTime(LocalDateTime bidTime) {
+        this.bidTime = bidTime;
+    }
+
     @Override
     public void printInfo() {
         System.out.println("Giao dịch ID: " + this.getId());

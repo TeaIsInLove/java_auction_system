@@ -1,7 +1,7 @@
 package com.example.bai_tap_lon.model.entity;
 
-import java.util.UUID;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public abstract class Entity {
     // Sử dụng protected để các lớp con (Item, User) có thể kế thừa và truy cập trực tiếp nếu cần

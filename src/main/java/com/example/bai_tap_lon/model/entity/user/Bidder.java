@@ -23,6 +23,20 @@ public class Bidder extends User {
             this.balance += amount;
         }
     }
+
+    // Rút tiền từ ví (thanh toán khi thắng đấu giá)
+    public boolean withdraw(double amount){
+        if(amount > 0 && this.balance >= amount){
+            this.balance -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    // Kiểm tra số dư có đủ để bid không
+    public boolean hasEnoughBalance(double amount){
+        return this.balance >= amount;
+    }
     @Override
     public String getRole(){
         return "Bidder";

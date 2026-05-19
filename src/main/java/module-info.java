@@ -1,11 +1,20 @@
-module com.example.bai_tap_lon {
+module com.example.auctionsystem {
     requires javafx.controls;
     requires javafx.fxml;
-    // ... các requires khác nếu có ...
+    requires javafx.web;
 
-    // Thêm dòng này để xin phép dùng Database:
+    requires org.controlsfx.controls;
+    requires com.dlsc.formsfx;
+    requires net.synedra.validatorfx;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.bootstrapfx.core;
+    requires eu.hansolo.tilesfx;
+    requires eu.hansolo.fx.countries;
+    requires com.almasb.fxgl.all;
+    requires java.naming;
     requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
-    opens com.example.bai_tap_lon to javafx.fxml;
+    opens com.example.bai_tap_lon.Controllers to javafx.fxml;
     exports com.example.bai_tap_lon;
 }

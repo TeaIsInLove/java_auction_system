@@ -6,6 +6,7 @@ import com.example.bai_tap_lon.model.entity.item.Item;
 import com.example.bai_tap_lon.model.entity.user.Seller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,13 +43,37 @@ public class Auction extends Entity implements AuctionSubject {
     }
 
     public void endAuction() {
-        this.status = AuctionStatus.FINISHED;
         if (winningBid != null) {
-            System.out.println("Phiên đấu giá kết thúc. Người thắng: " + winningBid.getBidder().getUsername());
+            this.status = AuctionStatus.FINISHED; // Có người thắng nhưng chưa thanh toán
+            System.out.println("Phiên đấu giá kết thúc. Người thắng: " + winningBid.getBidder().getUsername()
+                    + " với giá: $" + winningBid.getBidAmount());
         } else {
             this.status = AuctionStatus.CANCELED; // Không ai mua
             System.out.println("Phiên đấu giá bị hủy do không có người trả giá.");
         }
+    }
+
+    /**
+     * Hủy phiên đấu giá (chỉ khi chưa có ai bid)
+     */
+    public void cancelAuction() {
+        if (bidHistory.isEmpty()) {
+            this.status = AuctionStatus.CANCELED;
+            System.out.println("Phiên đấu giá đã bị hủy: " + item.getName());
+        }
+    }
+
+    /**
+     * Đánh dấu phiên đấu giá là đã thanh toán
+     */
+    public void markAsPaid() {
+        this.status = AuctionStatus.PAID;
+        System.out.println("Phiên đấu giá đã được thanh toán: " + item.getName());
+    }
+
+    /** Khôi phục trạng thái khi đọc từ CSDL (không dùng cho luồng đấu giá trực tiếp). */
+    public void restorePersistedState(AuctionStatus persistedStatus) {
+        this.status = persistedStatus;
     }
 
     // --- LOGIC ĐA LUỒNG: ĐẶT GIÁ ---
@@ -78,6 +103,16 @@ public class Auction extends Entity implements AuctionSubject {
         }
     }
 
+    /**
+     * Thêm bid từ database (không thông báo observers vì đây là dữ liệu cũ đã load).
+     */
+    public void addBidFromDatabase(BidTransaction bid) {
+        bidHistory.add(bid);
+        if (winningBid == null || bid.getBidAmount() > winningBid.getBidAmount()) {
+            winningBid = bid;
+        }
+    }
+
     // --- CÁC HÀM CỦA OBSERVER PATTERN ---
     @Override
     public void addObserver(AuctionObserver observer) {
@@ -97,7 +132,11 @@ public class Auction extends Entity implements AuctionSubject {
     }
 
     // Getters...
+    public Item getItem() { return item; }
+    public Seller getSeller() { return seller; }
     public AuctionStatus getStatus() { return status; }
+    public List<BidTransaction> getBidHistory() { return Collections.unmodifiableList(bidHistory); }
+    public BidTransaction getWinningBid() { return winningBid; }
     // --- HÀM KẾ THỪA TỪ ENTITY ---
     @Override
     public void printInfo() {

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.example.bai_tap_lon.Controllers.LoginController"
+        stylesheets="@../css/style.css"
+
+        alignment="CENTER"
+
+        prefWidth="900"
+        prefHeight="600"
+
+        style="
+            -fx-background-color:
+            linear-gradient(
+                to bottom right,
+                #bfdbfe,
+                #dbeafe,
+                #eff6ff
+            );
+        ">
+
+    <VBox alignment="CENTER"
+          maxWidth="420.0"
+          spacing="14.0"
+          styleClass="container">
+
+        <padding>
+            <Insets top="40.0"
+                    right="40.0"
+                    bottom="40.0"
+                    left="40.0"/>
+        </padding>
+
+        <Label text="LOGIN"
+               styleClass="title"/>
+
+        <TextField fx:id="usernameField"
+                   promptText="Email or Username"
+                   styleClass="input"/>
+
+        <PasswordField fx:id="passwordField"
+                       promptText="Password"
+                       styleClass="input"/>
+
+        <Label fx:id="messageLabel"
+               styleClass="error-label"/>
+
+        <Button text="Login"
+                onAction="#handleLogin"
+                styleClass="primary-btn"/>
+
+        <Button text="Register"
+                onAction="#goToRegister"
+                styleClass="secondary-btn"/>
+
+    </VBox>
+
+</StackPane>

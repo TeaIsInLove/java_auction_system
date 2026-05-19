@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="820" prefWidth="1400"
+            stylesheets="@../css/AuctionRoom.css"
+            xmlns="http://javafx.com/javafx/26"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.bai_tap_lon.Controllers.AuctionRoomController">
+
+    <top>
+
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="top-bar">
+
+            <padding>
+                <Insets bottom="20" left="25" right="25" top="20" />
+            </padding>
+
+            <StackPane prefHeight="140" prefWidth="140" styleClass="image-box">
+                <Label styleClass="image-icon" text="📦" />
+            </StackPane>
+
+            <VBox spacing="10">
+
+                <Label fx:id="titleLabel" styleClass="auction-title" text="" />
+
+                <Label fx:id="categoryLabel" styleClass="auction-category" text="" />
+
+                <HBox spacing="30">
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Giá hiện tại" />
+                        <Label fx:id="currentPriceLabel" styleClass="price-text" text="" />
+                    </VBox>
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Người dẫn đầu" />
+                        <Label fx:id="leaderLabel" styleClass="leader-text" text="" />
+                    </VBox>
+
+                    <VBox spacing="4">
+                        <Label styleClass="info-label" text="Kết thúc sau" />
+                        <Label fx:id="timerLabel" styleClass="timer-text" text="" />
+                    </VBox>
+
+                </HBox>
+
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <Label fx:id="statusBadgeLabel" styleClass="live-badge" text="" />
+
+        </HBox>
+
+    </top>
+
+    <center>
+
+        <HBox spacing="20" styleClass="main-content">
+
+            <padding>
+                <Insets bottom="20" left="25" right="25" top="20" />
+            </padding>
+
+            <VBox spacing="18" styleClass="panel-card" HBox.hgrow="ALWAYS">
+
+                <Label styleClass="section-title" text="Lịch sử đặt giá" />
+
+                <TableView fx:id="bidTable" styleClass="bid-table" VBox.vgrow="ALWAYS">
+
+                    <columns>
+
+                        <TableColumn fx:id="userColumn" prefWidth="220" text="Người dùng" />
+
+                        <TableColumn fx:id="amountColumn" prefWidth="180" text="Giá đặt" />
+
+                        <TableColumn fx:id="timeColumn" prefWidth="220" text="Thời gian" />
+
+                        <TableColumn fx:id="bidStatusColumn" prefWidth="180" text="Trạng thái" />
+
+                    </columns>
+
+                </TableView>
+
+            </VBox>
+
+            <VBox prefWidth="360" spacing="20">
+
+                <VBox spacing="16" styleClass="panel-card">
+
+                    <Label styleClass="section-title" text="Đặt giá" />
+
+                    <Button fx:id="startSessionButton" maxWidth="Infinity" onAction="#handleStartSession"
+                            styleClass="bid-button" text="Bắt đầu phiên đấu giá" />
+
+                    <Button fx:id="endSessionButton" maxWidth="Infinity" onAction="#handleEndSession"
+                            styleClass="end-session-button" text="Kết thúc phiên đấu giá" />
+
+                    <VBox spacing="8">
+                        <Label styleClass="info-label" text="Giá tối thiểu tiếp theo" />
+                        <Label fx:id="nextMinBidLabel" styleClass="next-price" text="" />
+                    </VBox>
+
+                    <TextField fx:id="bidAmountField" promptText="Nhập giá của bạn" styleClass="bid-input" />
+
+                    <Button fx:id="placeBidButton" maxWidth="Infinity" onAction="#handlePlaceBid"
+                            styleClass="bid-button" text="Đặt giá ngay" />
+
+                </VBox>
+
+                <VBox spacing="14" styleClass="panel-card">
+
+                    <Label styleClass="section-title" text="Thông tin phiên" />
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="sellerNameLabel" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="bidIncrementLabel" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="totalBidsLabel" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="participantsLabel" textFill="WHITE" />
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Label text="✔" />
+                        <Label fx:id="sessionStatusLabel" textFill="WHITE" />
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+
+        </HBox>
+
+    </center>
+
+</BorderPane>

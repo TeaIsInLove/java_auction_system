@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="800.0"
+            prefWidth="1300.0"
+            stylesheets="@../css/Dashboard.css"
+            xmlns="http://javafx.com/javafx/26"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.bai_tap_lon.Controllers.BidHistoryController">
+
+    <!-- ================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ================================================= -->
+
+    <left>
+
+        <VBox prefWidth="220"
+              minWidth="190"
+              maxWidth="240"
+              spacing="14"
+              styleClass="sidebar">
+
+            <padding>
+                <Insets top="18" right="15" bottom="18" left="15"/>
+            </padding>
+
+            <!-- LOGO -->
+            <VBox alignment="CENTER">
+
+                <ImageView fitWidth="170"
+                           preserveRatio="true"
+                           smooth="true">
+
+                    <image>
+                        <Image url="@logo.png"/>
+                    </image>
+
+                </ImageView>
+
+            </VBox>
+
+            <Separator />
+
+            <!-- MENU -->
+            <ScrollPane fitToWidth="true"
+                        hbarPolicy="NEVER"
+                        vbarPolicy="AS_NEEDED"
+                        VBox.vgrow="ALWAYS"
+                        styleClass="sidebar-scroll">
+
+                <content>
+
+                    <VBox spacing="10">
+
+                        <!-- ĐẤU GIÁ -->
+                        <Label styleClass="menu-section" text="ĐẤU GIÁ"/>
+
+                        <Button onAction="#handleShowLiveAuctions"
+                                styleClass="menu-button"
+                                text="🔥  Phiên đang diễn ra"/>
+
+                        <Button onAction="#handleShowAllAuctions"
+                                styleClass="menu-button"
+                                text="📦  Tất cả phiên đấu giá"/>
+
+                        <Button onAction="#handleOpenCreateAuction"
+                                styleClass="menu-button"
+                                text="➕  Tạo phiên đấu giá"/>
+
+                        <!-- QUẢN LÝ -->
+                        <Label styleClass="menu-section" text="QUẢN LÝ"/>
+
+                        <Button onAction="#handleShowMyAuctions"
+                                styleClass="menu-button"
+                                text="📁  Phiên của tôi"/>
+
+                        <Button styleClass="menu-button-active"
+                                text="🕘  Lịch sử đấu giá"/>
+
+                        <!-- TÀI CHÍNH -->
+                        <Label styleClass="menu-section" text="TÀI CHÍNH"/>
+
+                        <Button styleClass="menu-button"
+                                text="🏆  Phiên đã thắng"/>
+
+                        <Button styleClass="menu-button"
+                                text="💰  Ví của tôi"/>
+
+                        <Button styleClass="menu-button"
+                                text="🔔  Thông báo"/>
+
+                        <!-- CÁ NHÂN -->
+                        <Label styleClass="menu-section" text="CÁ NHÂN"/>
+
+                        <Button onAction="#handleOpenProfile"
+                                styleClass="menu-button"
+                                text="👤  Thông tin cá nhân"/>
+
+                        <Button styleClass="menu-button"
+                                text="⚙  Cài đặt"/>
+
+                    </VBox>
+
+                </content>
+
+            </ScrollPane>
+
+            <VBox VBox.vgrow="ALWAYS"/>
+
+            <!-- USER CARD -->
+            <VBox spacing="5"
+                  styleClass="user-card">
+
+                <Label styleClass="user-small"
+                       text="Xin chào,"/>
+
+                <Label fx:id="sidebarUsernameLabel"
+                       styleClass="user-name"/>
+
+                <Button onAction="#handleLogout"
+                        styleClass="logout-button"
+                        text="Đăng xuất"/>
+
+            </VBox>
+
+        </VBox>
+
+    </left>
+
+    <!-- ================================================= -->
+    <!-- MAIN CONTENT -->
+    <!-- ================================================= -->
+
+    <center>
+
+        <VBox styleClass="main-container">
+
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <!-- TOP BAR -->
+            <HBox alignment="CENTER_LEFT"
+                  spacing="12">
+
+                <!-- PAGE INFO -->
+                <VBox spacing="4">
+
+                    <Label styleClass="page-title"
+                           text="🕘 Lịch sử đấu giá"/>
+
+                    <Label styleClass="page-subtitle"
+                           text="Theo dõi hoạt động đấu giá của bạn"/>
+
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- BALANCE -->
+                <HBox alignment="CENTER_LEFT"
+                      spacing="10"
+                      minWidth="160"
+                      prefWidth="200"
+                      maxWidth="240"
+                      styleClass="balance-card">
+
+                    <Label text="💰"
+                           styleClass="balance-icon"/>
+
+                    <VBox spacing="1">
+
+                        <Label text="Số dư"
+                               styleClass="balance-title"/>
+
+                        <Label fx:id="balanceLabel"
+                               styleClass="balance-amount"/>
+
+                    </VBox>
+
+                </HBox>
+
+                <!-- USER -->
+                <HBox alignment="CENTER"
+                      spacing="8"
+                      styleClass="top-user-box">
+
+                    <Label styleClass="avatar-icon"
+                           text="👤"/>
+
+                    <VBox spacing="1">
+
+                        <Label fx:id="topUsernameLabel"
+                               styleClass="top-username"/>
+
+                        <Label styleClass="top-role"
+                               text="Người tham gia"/>
+
+                    </VBox>
+
+                </HBox>
+
+            </HBox>
+
+            <!-- STATS MINI -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+
+                <VBox styleClass="my-stats-card">
+                    <Label fx:id="totalBidsLabel" styleClass="my-stats-number"/>
+                    <Label text="Tổng lượt bid" styleClass="my-stats-title"/>
+                </VBox>
+
+                <VBox styleClass="my-stats-card">
+                    <Label fx:id="wonAuctionsLabel" styleClass="my-stats-number"/>
+                    <Label text="Phiên thắng" styleClass="my-stats-title"/>
+                </VBox>
+
+                <VBox styleClass="my-stats-card">
+                    <Label fx:id="lostAuctionsLabel" styleClass="my-stats-number"/>
+                    <Label text="Phiên thua" styleClass="my-stats-title"/>
+                </VBox>
+
+                <VBox styleClass="my-stats-card">
+                    <Label fx:id="totalSpentLabel" styleClass="my-stats-number"/>
+                    <Label text="Tổng tiền đã chi" styleClass="my-stats-title"/>
+                </VBox>
+
+                <VBox styleClass="my-stats-card">
+                    <Label fx:id="winRateLabel" styleClass="my-stats-number"/>
+                    <Label text="Tỷ lệ thắng" styleClass="my-stats-title"/>
+                </VBox>
+
+            </HBox>
+
+            <!-- FILTER BAR -->
+            <HBox spacing="12"
+                  alignment="CENTER_LEFT"
+                  styleClass="filter-bar">
+
+                <ComboBox fx:id="filterCombo"
+                          prefWidth="160"
+                          styleClass="filter-combo"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label fx:id="totalLabel"
+                       styleClass="total-label"
+                       text="Tổng: 0 bản ghi"/>
+
+            </HBox>
+
+            <!-- MAIN LIST -->
+            <ScrollPane fitToWidth="true"
+                        fitToHeight="true"
+                        hbarPolicy="NEVER"
+                        styleClass="auction-scroll"
+                        VBox.vgrow="ALWAYS">
+
+                <content>
+
+                    <VBox fx:id="bidHistoryContainer"
+                          spacing="12"/>
+
+                </content>
+
+            </ScrollPane>
+
+            <!-- EMPTY STATE -->
+            <VBox fx:id="emptyState"
+                  alignment="CENTER"
+                  spacing="15"
+                  visible="false"
+                  managed="false">
+
+                <Label styleClass="empty-icon" text="📋"/>
+                <Label styleClass="empty-title" text="Chưa có hoạt động đấu giá nào"/>
+                <Label styleClass="empty-subtitle" text="Tham gia đấu giá để xem lịch sử tại đây"/>
+
+                <Button text="🔍 Tìm phiên đấu giá"
+                        styleClass="create-first-button"
+                        onAction="#handleShowLiveAuctions"/>
+
+            </VBox>
+
+        </VBox>
+
+    </center>
+
+</BorderPane>

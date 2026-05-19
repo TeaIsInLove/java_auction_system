@@ -1,26 +1,24 @@
 package com.example.bai_tap_lon;
 
-import com.example.bai_tap_lon.dao.UserDAO;
+import com.example.bai_tap_lon.auth.AuthService;
 import com.example.bai_tap_lon.model.entity.user.Bidder;
-import com.example.bai_tap_lon.model.entity.user.User;
 
+/** Console smoke-test entry point (not the JavaFX app — use Launcher for that). */
 public class Main {
     public static void main(String[] args) {
-        // 1. Tạo một tài khoản mới tinh bằng Java
-        System.out.println("Đang tạo tài khoản Bidder...");
-        User newBidder = new Bidder("NguoiChoiHeX", "matkhauSieuKho123", "he_x@gmail.com");
+        System.out.println("=== Auction System - Console Test ===");
 
-        // 2. Gọi xe tải DAO đến chở dữ liệu đi cất
-        System.out.println("Đang kết nối Database và lưu dữ liệu...");
-        UserDAO userDao = new UserDAO();
-        boolean isSuccess = userDao.insertUser(newBidder, "Bidder");
+        Bidder bidder = new Bidder("TestUser", "pass", "test@example.com", 100_000_000);
+        System.out.println("Created bidder: " + bidder.getUsername() + " | role: " + bidder.getRole());
 
-        // 3. Thông báo kết quả
-        if (isSuccess) {
-            System.out.println("✅ LƯU DỮ LIỆU THÀNH CÔNG RỰC RỠ!");
-            System.out.println("👉 Hãy mở phpMyAdmin, bấm vào bảng 'users' để xem thành quả nhé!");
-        } else {
-            System.out.println("❌ LƯU THẤT BẠI. Vui lòng kiểm tra lại log lỗi.");
+        AuthService authService = new AuthService();
+        try {
+            boolean registered = authService.register("TestUser", "test_smoke@example.com", "password123");
+            System.out.println("Registration: " + (registered ? "SUCCESS" : "Email already exists"));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Validation error: " + e.getMessage());
         }
+
+        System.out.println("=== Done ===");
     }
 }

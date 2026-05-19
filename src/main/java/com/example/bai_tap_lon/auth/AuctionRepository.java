@@ -28,6 +28,23 @@ public class    AuctionRepository {
         this.bidRepository = new BidRepository(databaseManager);
     }
 
+    public Auction findById(String id) {
+        String sql = """
+                SELECT id, item_type, item_name, description, starting_price, current_highest_bid,
+                       start_time, end_time, seller_name, extra_info, status, created_at
+                FROM auction_sessions WHERE id = ? LIMIT 1
+                """;
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, id);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the doc phien dau gia.", ex);
+        }
+    }
+
     public List<Auction> findAll() {
         String sql = """
                 SELECT id, item_type, item_name, description, starting_price, current_highest_bid,

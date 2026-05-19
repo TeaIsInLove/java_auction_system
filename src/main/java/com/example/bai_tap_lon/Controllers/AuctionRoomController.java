@@ -77,10 +77,17 @@ public class AuctionRoomController {
         refreshTimeline.setCycleCount(Animation.INDEFINITE);
         refreshTimeline.play();
 
-        // Listen for real-time updates from other clients via the network layer
+        // Listen for real-time updates from other clients via the network layer.
+        // Reload from DB first so we get the remote client's changes, not stale local state.
         AuctionClient.getInstance().setOnMessageReceived(msg -> {
             if (auction != null && auction.getId().equals(msg.getAuctionId())) {
-                Platform.runLater(this::refreshAll);
+                Platform.runLater(() -> {
+                    Auction fresh = AuctionWorkspace.getInstance().reloadAuctionFromDb(msg.getAuctionId());
+                    if (fresh != null) {
+                        this.auction = fresh;
+                    }
+                    refreshAll();
+                });
             }
         });
     }

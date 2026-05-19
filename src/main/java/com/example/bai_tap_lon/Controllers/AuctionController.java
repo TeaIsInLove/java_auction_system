@@ -4,6 +4,7 @@ import com.example.bai_tap_lon.Services.DashboardService;
 import com.example.bai_tap_lon.auth.AppUser;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
+import com.example.bai_tap_lon.network.AuctionClient;
 import com.example.bai_tap_lon.session.SessionManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -151,6 +152,13 @@ public class AuctionController {
             loadBalance();
             refreshAuctionCards();
         });
+
+        // Refresh list view when any remote client changes an auction
+        AuctionClient.getInstance().setOnMessageReceived(msg -> Platform.runLater(() -> {
+            workspace.reloadAuctionFromDb(msg.getAuctionId());
+            applyFilters();
+            refreshAuctionCards();
+        }));
     }
 
     private void startCountdownTimer() {

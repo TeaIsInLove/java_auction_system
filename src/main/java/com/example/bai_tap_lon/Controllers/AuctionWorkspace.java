@@ -526,6 +526,31 @@ public final class AuctionWorkspace {
         return true;
     }
 
+    /**
+     * Reload a single auction from the database and replace the stale in-memory object.
+     * Call this when a remote client broadcasts a change so local state stays fresh.
+     * @return the freshly loaded Auction, or null if not found
+     */
+    public Auction reloadAuctionFromDb(String auctionId) {
+        Auction fresh = auctionRepository.findById(auctionId);
+        if (fresh == null) return null;
+
+        for (int i = 0; i < auctions.size(); i++) {
+            if (auctions.get(i).getId().equals(auctionId)) {
+                auctions.set(i, fresh);
+                if (selectedAuction.get() != null && selectedAuction.get().getId().equals(auctionId)) {
+                    selectedAuction.set(fresh);
+                }
+                auctionManager.getActiveAuctions().replaceAll(a -> a.getId().equals(auctionId) ? fresh : a);
+                return fresh;
+            }
+        }
+        // Auction not yet in local list — add it
+        auctionManager.addAuction(fresh);
+        auctions.add(fresh);
+        return fresh;
+    }
+
     public void clearLogs() {
         activityLogs.clear();
         appendLog("Da xoa nhat ky.");

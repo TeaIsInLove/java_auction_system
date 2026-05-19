@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Optional;
 
+
 public class LoginController {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
@@ -29,16 +30,7 @@ public class LoginController {
         String usernameOrEmail = usernameField.getText() == null ? "" : usernameField.getText().trim();
         String password = passwordField.getText() == null ? "" : passwordField.getText().trim();
 
-        Optional<AppUser> currentUser;
-        if ("admin".equalsIgnoreCase(usernameOrEmail) && "123".equals(password)) {
-            currentUser = Optional.of(new AppUser("admin", "", "admin@local", "ADMIN"));
-        } else if ("tester".equalsIgnoreCase(usernameOrEmail) && "123".equals(password)) {
-            currentUser = Optional.of(
-                    new AppUser("tester", "", "tester@local", "USER", 999999999)
-            );
-        } else {
-            currentUser = authService.login(usernameOrEmail, password);
-        }
+        Optional<AppUser> currentUser = authService.login(usernameOrEmail, password);
 
         if (currentUser.isEmpty()) {
             showError("Sai tai khoan hoac mat khau.");

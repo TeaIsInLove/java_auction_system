@@ -1,5 +1,6 @@
 package com.example.bai_tap_lon.auth;
 
+import com.example.bai_tap_lon.exception.AuthenticationException;
 import java.util.Optional;
 
 public class AuthService {
@@ -37,13 +38,20 @@ public class AuthService {
         if (email == null || password == null) {
             return Optional.empty();
         }
-
         Optional<AppUser> user = userRepository.findByEmail(email.trim().toLowerCase());
         if (user.isEmpty()) {
             return Optional.empty();
         }
-
         String passwordHash = PasswordUtil.hashPassword(password);
         return passwordHash.equals(user.get().getPassword()) ? user : Optional.empty();
+    }
+
+    /**
+     * Same as {@link #login} but throws {@link AuthenticationException} instead of returning empty.
+     * Useful for callers that prefer exception-based control flow.
+     */
+    public AppUser loginOrThrow(String email, String password) throws AuthenticationException {
+        return login(email, password)
+                .orElseThrow(() -> new AuthenticationException("Sai tai khoan hoac mat khau."));
     }
 }

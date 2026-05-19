@@ -3,8 +3,11 @@ package com.example.bai_tap_lon.Controllers;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
+import com.example.bai_tap_lon.network.AuctionClient;
 import com.example.bai_tap_lon.session.SessionManager;
 import javafx.animation.KeyFrame;
+import javafx.animation.Animation;
+import javafx.application.Platform;
 import javafx.animation.Timeline;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -71,8 +74,15 @@ public class AuctionRoomController {
             refreshTimeline.stop();
         }
         refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> refreshDynamicParts()));
-        refreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        refreshTimeline.setCycleCount(Animation.INDEFINITE);
         refreshTimeline.play();
+
+        // Listen for real-time updates from other clients via the network layer
+        AuctionClient.getInstance().setOnMessageReceived(msg -> {
+            if (auction != null && auction.getId().equals(msg.getAuctionId())) {
+                Platform.runLater(this::refreshAll);
+            }
+        });
     }
 
     public void dispose() {
@@ -80,6 +90,7 @@ public class AuctionRoomController {
             refreshTimeline.stop();
             refreshTimeline = null;
         }
+        AuctionClient.getInstance().setOnMessageReceived(null);
     }
 
     @FXML

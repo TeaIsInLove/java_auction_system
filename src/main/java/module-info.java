@@ -17,4 +17,5 @@ module com.example.auctionsystem {
 
     opens com.example.bai_tap_lon.Controllers to javafx.fxml;
     exports com.example.bai_tap_lon;
+    exports com.example.bai_tap_lon.network;
 }

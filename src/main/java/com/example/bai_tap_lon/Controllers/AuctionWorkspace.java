@@ -10,6 +10,8 @@ import com.example.bai_tap_lon.model.entity.item.Item;
 import com.example.bai_tap_lon.model.entity.item.ItemFactory;
 import com.example.bai_tap_lon.model.entity.user.Bidder;
 import com.example.bai_tap_lon.model.entity.user.Seller;
+import com.example.bai_tap_lon.network.AuctionClient;
+import com.example.bai_tap_lon.network.NetworkMessage;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -94,6 +96,8 @@ public final class AuctionWorkspace {
         appendLog("Tao phien moi: " + itemName + " - " + money(startingPrice));
         showMessage("Da tao phien dau gia moi.", true);
         touch();
+        AuctionClient.getInstance().send(
+                new NetworkMessage(NetworkMessage.Type.AUCTION_CREATED, auction.getId(), sellerName, startingPrice, itemName));
         return auction;
     }
 
@@ -127,6 +131,8 @@ public final class AuctionWorkspace {
         appendLog("Bat dau phien: " + auction.getItem().getName());
         showMessage("Phien dau gia dang RUNNING.", true);
         touch();
+        AuctionClient.getInstance().send(
+                new NetworkMessage(NetworkMessage.Type.AUCTION_STARTED, auction.getId(), actorUsername, 0, ""));
         return true;
     }
 
@@ -168,6 +174,8 @@ public final class AuctionWorkspace {
             appendLog(bidder.getUsername() + " dat " + money(amount) + " cho " + auction.getItem().getName());
             showMessage("Da ghi nhan gia moi: " + money(amount), true);
             touch();
+            AuctionClient.getInstance().send(
+                    new NetworkMessage(NetworkMessage.Type.BID_PLACED, auction.getId(), bidderName, amount, ""));
             return true;
         } catch (Exception ex) {
             showMessage(ex.getMessage(), false);
@@ -243,6 +251,8 @@ public final class AuctionWorkspace {
 
         appendLog("Trang thai: " + auction.getStatus());
         touch();
+        AuctionClient.getInstance().send(
+                new NetworkMessage(NetworkMessage.Type.AUCTION_ENDED, auction.getId(), actorUsername, 0, ""));
         return true;
     }
 
@@ -589,7 +599,11 @@ public final class AuctionWorkspace {
                                  LocalDateTime startTime, LocalDateTime endTime,
                                  String sellerName, String extraInfo) {
         Item item = ItemFactory.createItem(type, itemName, description, startingPrice, startTime, endTime, extraInfo);
-        Seller seller = new Seller(sellerName, "", emailFromName(sellerName), sellerName);
+        // Look up the real email from DB; fall back to generated address only when not found
+        String sellerEmail = userRepository.findByUsername(sellerName)
+                .map(AppUser::getEmail)
+                .orElseGet(() -> emailFromName(sellerName));
+        Seller seller = new Seller(sellerName, "", sellerEmail, sellerName);
         return new Auction(item, seller);
     }
 

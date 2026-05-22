@@ -25,7 +25,7 @@
     <children>
 
         <!-- Title -->
-        <Label text="USER LIST"
+        <Label text="QUẢN LÝ NGƯỜI DÙNG"
                style="
                    -fx-font-size: 26px;
                    -fx-font-weight: bold;
@@ -38,6 +38,16 @@
                     onAction="#handleOpenDashboard"
                     style="
                         -fx-background-color: #3b82f6;
+                        -fx-text-fill: white;
+                        -fx-font-size: 13px;
+                        -fx-padding: 8 20 8 20;
+                        -fx-background-radius: 8;
+                        -fx-cursor: hand;
+                    "/>
+            <Button text="Làm mới"
+                    onAction="#handleRefresh"
+                    style="
+                        -fx-background-color: #64748b;
                         -fx-text-fill: white;
                         -fx-font-size: 13px;
                         -fx-padding: 8 20 8 20;
@@ -69,7 +79,7 @@
                 <!-- Table -->
                 <TableView fx:id="tableView"
                            prefHeight="500.0"
-                           prefWidth="700.0"
+                           prefWidth="900.0"
 
                            style="
                                -fx-background-color: white;
@@ -82,16 +92,24 @@
                     <columns>
 
                         <TableColumn fx:id="usernameCol"
-                                     prefWidth="220.0"
+                                     prefWidth="180.0"
                                      text="Username"/>
 
                         <TableColumn fx:id="emailCol"
-                                     prefWidth="320.0"
+                                     prefWidth="240.0"
                                      text="Email"/>
 
                         <TableColumn fx:id="roleCol"
-                                     prefWidth="140.0"
+                                     prefWidth="100.0"
                                      text="Role"/>
+
+                        <TableColumn fx:id="balanceCol"
+                                     prefWidth="160.0"
+                                     text="Số dư (đ)"/>
+
+                        <TableColumn fx:id="actionsCol"
+                                     prefWidth="220.0"
+                                     text="Hành động"/>
 
                     </columns>
 

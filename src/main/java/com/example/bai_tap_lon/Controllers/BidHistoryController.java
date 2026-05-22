@@ -374,7 +374,7 @@ public class BidHistoryController {
                 .mapToDouble(i -> i.currentPrice)
                 .sum();
 
-        double winRate = totalBids > 0 ? (double) (won + lost) / totalBids * 100 : 0;
+        double winRate = (won + lost) > 0 ? (double) won / (won + lost) * 100 : 0;
 
         totalBidsLabel.setText(String.valueOf(totalBids));
         wonAuctionsLabel.setText(String.valueOf(won));
@@ -513,7 +513,7 @@ public class BidHistoryController {
 
         try {
             Parent root = FXMLLoader.load(
-                    getClass().getResource("/com/example/auctionsystem/Views/fxml/Login.fxml")
+                    getClass().getResource("/com/example/auctionsystem/Views/fxml/login.fxml")
             );
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));

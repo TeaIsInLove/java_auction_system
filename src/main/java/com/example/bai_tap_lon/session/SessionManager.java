@@ -55,6 +55,13 @@ public class SessionManager {
                 : "Guest";
     }
 
+    // Helper lấy email
+    public String getEmail() {
+        return isLoggedIn()
+                ? currentUser.get().getEmail()
+                : "";
+    }
+
     // Helper lấy role
     public String getRole() {
         return isLoggedIn()

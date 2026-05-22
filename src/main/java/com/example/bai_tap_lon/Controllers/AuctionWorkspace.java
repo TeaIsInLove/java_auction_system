@@ -224,6 +224,9 @@ public final class AuctionWorkspace {
             touch();
             AuctionClient.getInstance().send(
                     new NetworkMessage(NetworkMessage.Type.BID_PLACED, auction.getId(), bidderName, amount, ""));
+
+            // Trigger auto-bids from other registered bidders
+            AutoBidManager.getInstance().triggerAutoBids(auction, bidderName.trim(), this);
             return true;
         } catch (Exception ex) {
             showMessage(ex.getMessage(), false);

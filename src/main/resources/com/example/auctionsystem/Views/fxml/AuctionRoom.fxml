@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -73,6 +76,7 @@
                 <Insets bottom="20" left="25" right="25" top="20" />
             </padding>
 
+            <!-- Left panel: bid table + price trend chart -->
             <VBox spacing="18" styleClass="panel-card" HBox.hgrow="ALWAYS">
 
                 <Label styleClass="section-title" text="Lịch sử đặt giá" />
@@ -93,10 +97,24 @@
 
                 </TableView>
 
+                <!-- Bid price trend chart -->
+                <Label styleClass="section-title" text="Xu hướng giá" />
+
+                <LineChart fx:id="bidChart" prefHeight="180" animated="false" legendVisible="false">
+                    <xAxis>
+                        <NumberAxis label="Lượt đặt" forceZeroInRange="false" fx:id="chartXAxis" />
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Giá (triệu đ)" forceZeroInRange="false" fx:id="chartYAxis" />
+                    </yAxis>
+                </LineChart>
+
             </VBox>
 
+            <!-- Right panel -->
             <VBox prefWidth="360" spacing="20">
 
+                <!-- Bid action panel -->
                 <VBox spacing="16" styleClass="panel-card">
 
                     <Label styleClass="section-title" text="Đặt giá" />
@@ -119,6 +137,27 @@
 
                 </VBox>
 
+                <!-- Auto-bid panel -->
+                <VBox spacing="12" styleClass="panel-card">
+
+                    <Label styleClass="section-title" text="Đặt giá tự động" />
+
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="autoBidCheckBox" text="Bật đặt giá tự động"
+                                  onAction="#handleAutoBidToggle" textFill="WHITE" />
+                    </HBox>
+
+                    <VBox spacing="6">
+                        <Label styleClass="info-label" text="Giá tối đa sẵn sàng trả" />
+                        <TextField fx:id="autoBidMaxField" promptText="VD: 5000000" styleClass="bid-input" />
+                    </VBox>
+
+                    <Label fx:id="autoBidStatusLabel" text="" wrapText="true"
+                           style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;" />
+
+                </VBox>
+
+                <!-- Session info panel -->
                 <VBox spacing="14" styleClass="panel-card">
 
                     <Label styleClass="section-title" text="Thông tin phiên" />

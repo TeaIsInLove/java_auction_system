@@ -5,6 +5,8 @@ import com.example.bai_tap_lon.model.entity.Entity;
 import com.example.bai_tap_lon.model.entity.item.Item;
 import com.example.bai_tap_lon.model.entity.user.Seller;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -93,6 +95,16 @@ public class Auction extends Entity implements AuctionSubject {
             bidHistory.add(newBid);
             winningBid = newBid;
             item.setCurrentHighestBid(newBid.getBidAmount());
+
+            // ANTI-SNIPE: nếu bid trong vòng 5 phút cuối, gia hạn thêm 5 phút
+            LocalDateTime endTime = item.getEndTime();
+            if (endTime != null) {
+                long minutesLeft = Duration.between(LocalDateTime.now(), endTime).toMinutes();
+                if (minutesLeft >= 0 && minutesLeft < 5) {
+                    item.setEndTime(endTime.plusMinutes(5));
+                    notifyObservers(newBid, "Anti-snipe: gia han them 5 phut!");
+                }
+            }
 
             // THÔNG BÁO CHO TẤT CẢ GIAO DIỆN CẬP NHẬT REALTIME
             notifyObservers(newBid, "Có giá mới: $" + newBid.getBidAmount());

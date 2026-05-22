@@ -784,7 +784,7 @@ public class AuctionController {
 
         try {
             Parent root = FXMLLoader.load(
-                    getClass().getResource("/com/example/auctionsystem/Views/fxml/Login.fxml")
+                    getClass().getResource("/com/example/auctionsystem/Views/fxml/login.fxml")
             );
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));

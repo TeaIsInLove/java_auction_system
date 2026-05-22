@@ -13,6 +13,9 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.util.Duration;
 
@@ -47,6 +50,16 @@ public class AuctionRoomController {
     @FXML private Label participantsLabel;
     @FXML private Label sessionStatusLabel;
     @FXML private Label sellerNameLabel;
+
+    // Bid trend chart
+    @FXML private LineChart<Number, Number> bidChart;
+    @FXML private NumberAxis chartXAxis;
+    @FXML private NumberAxis chartYAxis;
+
+    // Auto-bid controls
+    @FXML private CheckBox autoBidCheckBox;
+    @FXML private TextField autoBidMaxField;
+    @FXML private Label autoBidStatusLabel;
 
     private Auction auction;
     private Timeline refreshTimeline;
@@ -90,6 +103,18 @@ public class AuctionRoomController {
                 });
             }
         });
+
+        // Restore auto-bid checkbox state if previously registered
+        if (autoBidCheckBox != null && auction != null) {
+            String me = SessionManager.getInstance().getUsername();
+            boolean registered = AutoBidManager.getInstance().isRegistered(auction.getId(), me);
+            autoBidCheckBox.setSelected(registered);
+            if (registered) {
+                double max = AutoBidManager.getInstance().getMaxPrice(auction.getId(), me);
+                if (autoBidMaxField != null) autoBidMaxField.setText(String.valueOf((long) max));
+                updateAutoBidStatusLabel(true, max);
+            }
+        }
     }
 
     public void dispose() {
@@ -158,6 +183,53 @@ public class AuctionRoomController {
         }
     }
 
+    /**
+     * Toggle auto-bid on or off for the current user in this auction.
+     * When turned on the max price field value is read and registered.
+     */
+    @FXML
+    private void handleAutoBidToggle() {
+        if (auction == null || autoBidCheckBox == null) return;
+
+        String me = SessionManager.getInstance().getUsername();
+        if (me == null || me.isBlank() || "Guest".equalsIgnoreCase(me)) {
+            alert("Vui lòng đăng nhập để sử dụng đặt giá tự động.");
+            autoBidCheckBox.setSelected(false);
+            return;
+        }
+
+        if (autoBidCheckBox.isSelected()) {
+            // Enabling — read max price
+            Double max = parseMoney(autoBidMaxField != null ? autoBidMaxField.getText() : "");
+            if (max == null || max <= 0) {
+                alert("Nhập giá tối đa hợp lệ trước khi bật đặt giá tự động.");
+                autoBidCheckBox.setSelected(false);
+                return;
+            }
+            double currentHighest = auction.getItem().getCurrentHighestBid();
+            if (max <= currentHighest) {
+                alert("Giá tối đa phải cao hơn giá hiện tại (" + AuctionWorkspace.formatVnd(currentHighest) + " đ).");
+                autoBidCheckBox.setSelected(false);
+                return;
+            }
+            AutoBidManager.getInstance().register(auction.getId(), me, max);
+            updateAutoBidStatusLabel(true, max);
+        } else {
+            // Disabling
+            AutoBidManager.getInstance().unregister(auction.getId(), me);
+            updateAutoBidStatusLabel(false, 0);
+        }
+    }
+
+    private void updateAutoBidStatusLabel(boolean active, double maxPrice) {
+        if (autoBidStatusLabel == null) return;
+        if (active) {
+            autoBidStatusLabel.setText("Đang bật — tối đa: " + AuctionWorkspace.formatVnd(maxPrice) + " đ");
+        } else {
+            autoBidStatusLabel.setText("Đã tắt");
+        }
+    }
+
     private void ensureColumns() {
         if (columnsConfigured || userColumn == null) {
             return;
@@ -172,6 +244,7 @@ public class AuctionRoomController {
     private void refreshAll() {
         refreshStaticHeader();
         refreshBidTable();
+        refreshChart();
         refreshDynamicParts();
     }
 
@@ -253,6 +326,30 @@ public class AuctionRoomController {
             ));
         }
         bidTable.setItems(rows);
+    }
+
+    /**
+     * Refresh the bid price trend LineChart.
+     * X-axis = bid number (chronological), Y-axis = price in millions VNĐ.
+     */
+    private void refreshChart() {
+        if (bidChart == null || auction == null) return;
+
+        List<BidTransaction> chronological = new ArrayList<>(auction.getBidHistory());
+        chronological.sort(Comparator.comparing(BidTransaction::getBidTime));
+
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        series.setName("Giá");
+
+        for (int i = 0; i < chronological.size(); i++) {
+            double priceMillions = chronological.get(i).getBidAmount() / 1_000_000.0;
+            series.getData().add(new XYChart.Data<>(i + 1, priceMillions));
+        }
+
+        bidChart.getData().clear();
+        if (!chronological.isEmpty()) {
+            bidChart.getData().add(series);
+        }
     }
 
     private static int countDistinctBidders(List<BidTransaction> history) {

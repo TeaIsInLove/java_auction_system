@@ -141,4 +141,40 @@ public class UserRepository {
             throw new RuntimeException("Khong the cap nhat so du theo email.", ex);
         }
     }
+
+    /**
+     * Delete a user account by email address.
+     *
+     * @param email the email of the user to delete
+     * @return true if a row was deleted, false if the email was not found
+     */
+    public boolean deleteByEmail(String email) {
+        String sql = "DELETE FROM users WHERE email = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the xoa user.", ex);
+        }
+    }
+
+    /**
+     * Change the role of a user identified by email.
+     *
+     * @param email   target user's email
+     * @param newRole new role string, e.g. "ADMIN" or "USER"
+     * @return true if the row was updated
+     */
+    public boolean updateRole(String email, String newRole) {
+        String sql = "UPDATE users SET role = ? WHERE email = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, newRole);
+            statement.setString(2, email);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the cap nhat role.", ex);
+        }
+    }
 }

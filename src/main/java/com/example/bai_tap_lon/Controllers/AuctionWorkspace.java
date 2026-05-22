@@ -112,6 +112,54 @@ public final class AuctionWorkspace {
         return auction.getSeller().getUsername().trim().equalsIgnoreCase(username.trim());
     }
 
+    /**
+     * Edit the details of an OPEN auction (before it starts).
+     * Starting price can only be changed if no bids have been placed yet.
+     */
+    public boolean updateAuctionDetails(Auction auction, String newName, String newDescription,
+                                        double newStartingPrice, java.time.LocalDateTime newEndTime,
+                                        String actorUsername) {
+        if (auction == null) {
+            showMessage("Không tìm thấy phiên đấu giá.", false);
+            return false;
+        }
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            showMessage("Chỉ có thể chỉnh sửa phiên chưa bắt đầu (OPEN).", false);
+            return false;
+        }
+        if (!isAuctionSeller(auction, actorUsername) && !actorUsername.equalsIgnoreCase("admin")) {
+            showMessage("Chỉ người tạo phiên hoặc admin mới được chỉnh sửa.", false);
+            return false;
+        }
+        if (newName == null || newName.isBlank()) {
+            showMessage("Tên sản phẩm không được để trống.", false);
+            return false;
+        }
+        if (newStartingPrice <= 0) {
+            showMessage("Giá khởi điểm phải lớn hơn 0.", false);
+            return false;
+        }
+
+        auction.getItem().setName(newName.trim());
+        auction.getItem().setDescription(newDescription == null ? "" : newDescription.trim());
+
+        // Only update starting price if no bids yet
+        if (auction.getBidHistory().isEmpty()) {
+            auction.getItem().setStartingPrice(newStartingPrice);
+            auction.getItem().setCurrentHighestBid(newStartingPrice);
+        }
+
+        if (newEndTime != null && newEndTime.isAfter(auction.getItem().getStartTime())) {
+            auction.getItem().setEndTime(newEndTime);
+        }
+
+        auctionRepository.update(auction);
+        appendLog("Da chinh sua phien: " + newName);
+        showMessage("Đã cập nhật phiên đấu giá.", true);
+        touch();
+        return true;
+    }
+
     public boolean startAuction(Auction auction, String actorUsername) {
         if (auction == null) {
             showMessage("Chon mot phien dau gia trong bang.", false);

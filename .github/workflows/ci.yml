@@ -22,7 +22,8 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        run: mvn -B clean test --file pom.xml
+        # Override compiler source/target to 21 so CI (JDK 21) can compile the project
+        run: mvn -B clean test -Djava.version=21 --file pom.xml
         env:
           # Suppress JavaFX headless errors in CI — tests do not use JavaFX
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"

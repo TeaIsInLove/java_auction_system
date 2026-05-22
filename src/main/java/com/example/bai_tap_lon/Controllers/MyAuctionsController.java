@@ -9,10 +9,12 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -20,8 +22,12 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MyAuctionsController {
@@ -316,9 +322,75 @@ public class MyAuctionsController {
         card.getChildren().addAll(statusBar, header, body, actions);
 
         viewBtn.setOnAction(e -> openAuctionRoom(auction));
+        editBtn.setOnAction(e -> handleEditAuction(auction));
         cancelBtn.setOnAction(e -> cancelAuction(auction));
 
         return card;
+    }
+
+    private void handleEditAuction(Auction auction) {
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            new Alert(Alert.AlertType.WARNING,
+                    "Chỉ có thể chỉnh sửa phiên ở trạng thái OPEN (chưa bắt đầu).").showAndWait();
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Chỉnh sửa phiên đấu giá");
+        dialog.setHeaderText("Chỉnh sửa: " + auction.getItem().getName());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 20, 10, 10));
+
+        TextField nameField = new TextField(auction.getItem().getName());
+        TextArea descArea = new TextArea(auction.getItem().getDescription());
+        descArea.setPrefRowCount(3);
+
+        boolean hasBids = !auction.getBidHistory().isEmpty();
+        TextField priceField = new TextField(String.valueOf((long) auction.getItem().getStartingPrice()));
+        priceField.setDisable(hasBids);
+        if (hasBids) priceField.setTooltip(new Tooltip("Không thể thay đổi giá khi đã có bid"));
+
+        DatePicker endDatePicker = new DatePicker(auction.getItem().getEndTime().toLocalDate());
+        TextField endTimeField = new TextField(auction.getItem().getEndTime().toLocalTime()
+                .withSecond(0).withNano(0).toString());
+
+        grid.add(new Label("Tên sản phẩm:"), 0, 0); grid.add(nameField, 1, 0);
+        grid.add(new Label("Mô tả:"),         0, 1); grid.add(descArea,  1, 1);
+        grid.add(new Label("Giá khởi điểm:"), 0, 2); grid.add(priceField, 1, 2);
+        grid.add(new Label("Ngày kết thúc:"), 0, 3); grid.add(endDatePicker, 1, 3);
+        grid.add(new Label("Giờ kết thúc:"),  0, 4); grid.add(endTimeField, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) return;
+
+        double newPrice;
+        try {
+            newPrice = Double.parseDouble(priceField.getText().trim().replace(",", ""));
+        } catch (NumberFormatException ex) {
+            new Alert(Alert.AlertType.ERROR, "Giá khởi điểm không hợp lệ.").showAndWait();
+            return;
+        }
+
+        LocalDateTime newEndTime;
+        try {
+            LocalTime time = LocalTime.parse(endTimeField.getText().trim());
+            newEndTime = LocalDateTime.of(endDatePicker.getValue(), time);
+        } catch (DateTimeParseException ex) {
+            new Alert(Alert.AlertType.ERROR, "Giờ kết thúc không hợp lệ (dùng định dạng HH:mm).").showAndWait();
+            return;
+        }
+
+        boolean ok = workspace.updateAuctionDetails(
+                auction, nameField.getText(), descArea.getText(),
+                newPrice, newEndTime, currentUsername);
+
+        if (ok) loadAuctions();
     }
 
     private VBox createFinishedAuctionCard(Auction auction) {

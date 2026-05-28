@@ -12,6 +12,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -326,6 +327,7 @@ public class BidHistoryController {
 
         // Status
         String statusText = switch (item.auction.getStatus()) {
+            case PENDING_APPROVAL -> "Chờ duyệt";
             case RUNNING -> "Đang diễn ra";
             case OPEN -> "Sắp bắt đầu";
             case FINISHED -> "Đã kết thúc";
@@ -446,8 +448,9 @@ public class BidHistoryController {
             );
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Không thể mở Phiên của tôi:\n" + e.getMessage()).showAndWait();
         }
     }
 

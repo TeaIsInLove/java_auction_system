@@ -8,14 +8,13 @@ public class ItemFactory {
                                   LocalDateTime start, LocalDateTime end, String extraInfo) {
         switch (type.toLowerCase()) {
             case "electronics":
-                // extraInfo có thể là thương hiệu
                 return new Electronics(name, description, startPrice, start, end, extraInfo, 12);
             case "art":
-                // extraInfo có thể là tên tác giả
                 return new Art(name, description, startPrice, start, end, extraInfo, 2024);
             case "vehicle":
-                // extraInfo có thể là hãng xe
                 return new Vehicle(name, description, startPrice, start, end, extraInfo, "Unknown", 0.0);
+            case "general":
+                return new GeneralItem(name, description, startPrice, start, end, extraInfo);
             default:
                 throw new IllegalArgumentException("Loại sản phẩm không hợp lệ: " + type);
         }

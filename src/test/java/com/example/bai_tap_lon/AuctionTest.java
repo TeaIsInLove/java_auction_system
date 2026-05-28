@@ -1,5 +1,9 @@
 package com.example.bai_tap_lon;
 
+import com.example.bai_tap_lon.exception.AuctionClosedException;
+import com.example.bai_tap_lon.exception.AuctionException;
+import com.example.bai_tap_lon.exception.InvalidBidException;
+import com.example.bai_tap_lon.exception.SellerBiddingOwnItemException;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
@@ -51,11 +55,11 @@ class AuctionTest {
     @Test
     void placeBidFailsWhenNotRunning() {
         BidTransaction bid = new BidTransaction(bidder, 15_000_000);
-        assertThrows(Exception.class, () -> auction.placeBid(bid));
+        assertThrows(AuctionClosedException.class, () -> auction.placeBid(bid));
     }
 
     @Test
-    void placeBidSucceedsWhenRunning() throws Exception {
+    void placeBidSucceedsWhenRunning() throws AuctionException {
         auction.startAuction();
         BidTransaction bid = new BidTransaction(bidder, 15_000_000);
         auction.placeBid(bid);
@@ -69,11 +73,19 @@ class AuctionTest {
     void placeBidFailsWhenAmountTooLow() {
         auction.startAuction();
         BidTransaction lowBid = new BidTransaction(bidder, 5_000_000); // below starting price
-        assertThrows(Exception.class, () -> auction.placeBid(lowBid));
+        assertThrows(InvalidBidException.class, () -> auction.placeBid(lowBid));
     }
 
     @Test
-    void higherBidWins() throws Exception {
+    void sellerCannotBidOnOwnAuction() {
+        auction.startAuction();
+        Bidder sellerAsBidder = new Bidder("seller1", "pass", "seller1@test.com", 50_000_000);
+        BidTransaction bid = new BidTransaction(sellerAsBidder, 15_000_000);
+        assertThrows(SellerBiddingOwnItemException.class, () -> auction.placeBid(bid));
+    }
+
+    @Test
+    void higherBidWins() throws AuctionException {
         auction.startAuction();
         Bidder bidder2 = new Bidder("buyer2", "pass", "buyer2@test.com", 100_000_000);
 
@@ -86,7 +98,7 @@ class AuctionTest {
     }
 
     @Test
-    void endAuctionWithWinnerBecomesFinished() throws Exception {
+    void endAuctionWithWinnerBecomesFinished() throws AuctionException {
         auction.startAuction();
         auction.placeBid(new BidTransaction(bidder, 12_000_000));
         auction.endAuction();
@@ -107,7 +119,7 @@ class AuctionTest {
     }
 
     @Test
-    void cancelAuctionDoesNotWorkAfterBidPlaced() throws Exception {
+    void cancelAuctionDoesNotWorkAfterBidPlaced() throws AuctionException {
         auction.startAuction();
         auction.placeBid(new BidTransaction(bidder, 12_000_000));
         auction.endAuction(); // Finish it first
@@ -120,7 +132,7 @@ class AuctionTest {
     }
 
     @Test
-    void markAsPaidTransitionsToPaid() throws Exception {
+    void markAsPaidTransitionsToPaid() throws AuctionException {
         auction.startAuction();
         auction.placeBid(new BidTransaction(bidder, 12_000_000));
         auction.endAuction();

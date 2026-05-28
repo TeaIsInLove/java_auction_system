@@ -163,7 +163,24 @@
 
         <Region prefHeight="8"/>
 
-        <!-- BUTTON -->
+        <!-- ACTION BUTTONS -->
+        <HBox spacing="12" alignment="CENTER">
+
+            <Button text="💰 Nạp tiền"
+                    onAction="#handleDeposit"
+                    prefWidth="150"
+                    prefHeight="44"
+                    styleClass="menu-button"/>
+
+            <Button text="🔑 Đổi mật khẩu"
+                    onAction="#handleChangePassword"
+                    prefWidth="160"
+                    prefHeight="44"
+                    styleClass="menu-button"/>
+
+        </HBox>
+
+        <!-- CLOSE BUTTON -->
         <Button text="Đóng"
                 onAction="#handleClose"
                 prefWidth="180"

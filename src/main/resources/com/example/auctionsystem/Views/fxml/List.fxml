@@ -10,7 +10,7 @@
 
 <VBox alignment="TOP_CENTER"
       spacing="16.0"
-      xmlns="http://javafx.com/javafx/21"
+      xmlns="http://javafx.com/javafx/26"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.bai_tap_lon.Controllers.ListController"
 
@@ -48,6 +48,17 @@
                     onAction="#handleRefresh"
                     style="
                         -fx-background-color: #64748b;
+                        -fx-text-fill: white;
+                        -fx-font-size: 13px;
+                        -fx-padding: 8 20 8 20;
+                        -fx-background-radius: 8;
+                        -fx-cursor: hand;
+                    "/>
+            <Button fx:id="pendingApprovalBtn"
+                    text="Duyệt phiên đấu giá"
+                    onAction="#handleApprovePendingAuctions"
+                    style="
+                        -fx-background-color: #9b59b6;
                         -fx-text-fill: white;
                         -fx-font-size: 13px;
                         -fx-padding: 8 20 8 20;

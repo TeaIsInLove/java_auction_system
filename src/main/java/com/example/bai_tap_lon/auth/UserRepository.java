@@ -142,6 +142,21 @@ public class UserRepository {
         }
     }
 
+    public void updatePassword(String email, String hashedPassword) {
+        String sql = "UPDATE users SET password_hash = ? WHERE email = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, hashedPassword);
+            statement.setString(2, email);
+            int rows = statement.executeUpdate();
+            if (rows == 0) {
+                throw new RuntimeException("Khong tim thay user voi email: " + email);
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Khong the cap nhat mat khau.", ex);
+        }
+    }
+
     /**
      * Delete a user account by email address.
      *

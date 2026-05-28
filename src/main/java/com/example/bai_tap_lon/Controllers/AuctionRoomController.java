@@ -372,6 +372,10 @@ public class AuctionRoomController {
                 statusBadgeLabel.getStyleClass().add("open-badge");
                 statusBadgeLabel.setText("CHƯA BẮT ĐẦU");
             }
+            case PENDING_APPROVAL -> {
+                statusBadgeLabel.getStyleClass().add("open-badge");
+                statusBadgeLabel.setText("CHỜ DUYỆT");
+            }
             case FINISHED, PAID, CANCELED -> {
                 statusBadgeLabel.getStyleClass().add("ended-badge");
                 statusBadgeLabel.setText(switch (st) {
@@ -387,6 +391,7 @@ public class AuctionRoomController {
     /** Nhãn tiếng Việt, khớp với badge (OPEN = chưa bắt đầu đặt giá). */
     private static String sessionStatusVietnamese(AuctionStatus st) {
         return switch (st) {
+            case PENDING_APPROVAL -> "Chờ duyệt";
             case OPEN -> "Chưa bắt đầu";
             case RUNNING -> "Đang diễn ra";
             case FINISHED -> "Đã kết thúc";

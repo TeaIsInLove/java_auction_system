@@ -194,28 +194,18 @@ public class    AuctionRepository {
     }
 
     private static String resolveItemType(Item item) {
-        if (item instanceof Electronics) {
-            return "electronics";
-        }
-        if (item instanceof Art) {
-            return "art";
-        }
-        if (item instanceof Vehicle) {
-            return "vehicle";
-        }
+        if (item instanceof Electronics) return "electronics";
+        if (item instanceof Art) return "art";
+        if (item instanceof Vehicle) return "vehicle";
+        if (item instanceof GeneralItem) return "general";
         throw new IllegalArgumentException("Loai san pham khong ho tro luu CSDL.");
     }
 
     private static String resolveExtraInfo(Item item) {
-        if (item instanceof Electronics e) {
-            return e.getBrand();
-        }
-        if (item instanceof Art a) {
-            return a.getArtist();
-        }
-        if (item instanceof Vehicle v) {
-            return v.getMake();
-        }
+        if (item instanceof Electronics e) return e.getBrand();
+        if (item instanceof Art a) return a.getArtist();
+        if (item instanceof Vehicle v) return v.getMake();
+        if (item instanceof GeneralItem g) return g.getCategory();
         return "";
     }
 

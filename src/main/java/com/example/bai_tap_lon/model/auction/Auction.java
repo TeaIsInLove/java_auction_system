@@ -1,5 +1,9 @@
 package com.example.bai_tap_lon.model.auction;
 
+import com.example.bai_tap_lon.exception.AuctionClosedException;
+import com.example.bai_tap_lon.exception.AuctionException;
+import com.example.bai_tap_lon.exception.InvalidBidException;
+import com.example.bai_tap_lon.exception.SellerBiddingOwnItemException;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
 import com.example.bai_tap_lon.model.entity.Entity;
 import com.example.bai_tap_lon.model.entity.item.Item;
@@ -56,6 +60,23 @@ public class Auction extends Entity implements AuctionSubject {
     }
 
     /**
+     * Đặt phiên vào trạng thái chờ duyệt (gọi khi tạo phiên qua UI, trước khi admin duyệt).
+     */
+    public void setPendingApproval() {
+        this.status = AuctionStatus.PENDING_APPROVAL;
+    }
+
+    /**
+     * Admin duyệt phiên: chuyển từ PENDING_APPROVAL → OPEN.
+     */
+    public void approveAuction() {
+        if (this.status == AuctionStatus.PENDING_APPROVAL) {
+            this.status = AuctionStatus.OPEN;
+            System.out.println("Phiên đấu giá đã được duyệt: " + item.getName());
+        }
+    }
+
+    /**
      * Hủy phiên đấu giá (chỉ khi chưa có ai bid)
      */
     public void cancelAuction() {
@@ -79,16 +100,21 @@ public class Auction extends Entity implements AuctionSubject {
     }
 
     // --- LOGIC ĐA LUỒNG: ĐẶT GIÁ ---
-    public void placeBid(BidTransaction newBid) throws Exception {
+    public void placeBid(BidTransaction newBid) throws AuctionException {
         // Dùng khóa Lock để đảm bảo tại 1 mili-giây, chỉ có 1 người được chạy đoạn code xét giá này
         lock.lock();
         try {
             if (this.status != AuctionStatus.RUNNING) {
-                throw new Exception("Phiên đấu giá chưa mở hoặc đã kết thúc!");
+                throw new AuctionClosedException("Phiên đấu giá chưa mở hoặc đã kết thúc!");
+            }
+
+            if (seller != null && newBid.getBidder().getUsername().equalsIgnoreCase(seller.getUsername())) {
+                throw new SellerBiddingOwnItemException("Người tạo phiên không được tự đặt giá vào phiên của mình!");
             }
 
             if (newBid.getBidAmount() <= item.getCurrentHighestBid()) {
-                throw new Exception("Giá đặt phải cao hơn mức giá cao nhất hiện tại!");
+                throw new InvalidBidException("Giá đặt phải cao hơn mức giá cao nhất hiện tại: "
+                        + item.getCurrentHighestBid());
             }
 
             // Nếu hợp lệ: Cập nhật hệ thống

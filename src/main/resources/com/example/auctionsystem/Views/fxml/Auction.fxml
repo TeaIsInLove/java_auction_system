@@ -71,8 +71,6 @@
 
                         <Button onAction="#handleOpenProfile" styleClass="menu-button" text="👤  Thông tin cá nhân" />
 
-                        <Button styleClass="menu-button" text="⚙  Cài đặt" />
-
                     </VBox>
 
                 </content>

@@ -1,5 +1,6 @@
 package com.example.bai_tap_lon;
 
+import com.example.bai_tap_lon.Controllers.AuctionWorkspace;
 import com.example.bai_tap_lon.network.AuctionClient;
 import com.example.bai_tap_lon.network.AuctionServer;
 import javafx.application.Application;
@@ -11,6 +12,7 @@ public class Launcher extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        AuctionWorkspace.getInstance().startPendingApprovalCleaner();
         connectToServer();
 
         FXMLLoader loader = new FXMLLoader(

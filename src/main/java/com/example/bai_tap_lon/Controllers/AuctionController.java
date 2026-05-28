@@ -98,6 +98,7 @@ public class AuctionController {
         // Status filter options
         statusFilter.setItems(FXCollections.observableArrayList(
                 "Tất cả",
+                "Chờ duyệt",
                 "Chưa bắt đầu",
                 "Đang diễn ra",
                 "Đã kết thúc",
@@ -286,6 +287,7 @@ public class AuctionController {
         if (status == null || status.equals("Tất cả")) return true;
 
         return switch (status) {
+            case "Chờ duyệt" -> auction.getStatus() == AuctionStatus.PENDING_APPROVAL;
             case "Chưa bắt đầu" -> auction.getStatus() == AuctionStatus.OPEN;
             case "Đang diễn ra" -> auction.getStatus() == AuctionStatus.RUNNING;
             case "Đã kết thúc" -> auction.getStatus() == AuctionStatus.FINISHED;
@@ -491,10 +493,11 @@ public class AuctionController {
         statusBar.setPrefHeight(4);
 
         String statusColor = switch (auction.getStatus()) {
-            case RUNNING -> "#10b981";    // Green
-            case OPEN -> "#f59e0b";        // Orange
-            case FINISHED, PAID -> "#6b7280"; // Gray
-            case CANCELED -> "#ef4444";   // Red
+            case RUNNING -> "#10b981";
+            case OPEN -> "#f59e0b";
+            case FINISHED, PAID -> "#6b7280";
+            case CANCELED -> "#ef4444";
+            case PENDING_APPROVAL -> "#9b59b6";
         };
         statusBar.setStyle("-fx-background-color: " + statusColor + ";");
 
@@ -631,6 +634,7 @@ public class AuctionController {
 
     private String getStatusText(AuctionStatus status) {
         return switch (status) {
+            case PENDING_APPROVAL -> "Chờ duyệt";
             case OPEN -> "Chưa bắt đầu";
             case RUNNING -> "Đang diễn ra";
             case FINISHED -> "Đã kết thúc";
@@ -681,8 +685,9 @@ public class AuctionController {
             );
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Không thể mở Phiên của tôi:\n" + e.getMessage()).showAndWait();
         }
     }
 
@@ -694,8 +699,9 @@ public class AuctionController {
             );
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Không thể mở Lịch sử đấu giá:\n" + e.getMessage()).showAndWait();
         }
     }
 

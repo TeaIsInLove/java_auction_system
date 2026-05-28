@@ -32,7 +32,8 @@ public class AuctionCreateController {
 
     @FXML
     public void initialize() {
-        itemTypeCombo.setItems(FXCollections.observableArrayList("electronics", "art", "vehicle"));
+        itemTypeCombo.setItems(FXCollections.observableArrayList(
+                "Điện tử", "Nghệ thuật", "Xe cộ", "Khác (tùy chỉnh)"));
         itemTypeCombo.getSelectionModel().selectFirst();
         itemTypeCombo.valueProperty().addListener((obs, oldValue, type) -> updateExtraInfoPrompt(type));
         updateExtraInfoPrompt(itemTypeCombo.getValue());
@@ -67,13 +68,18 @@ public class AuctionCreateController {
             return;
         }
 
-        String type = itemTypeCombo.getValue();
+        String displayType = itemTypeCombo.getValue();
+        String type = mapDisplayTypeToKey(displayType);
         String itemName = text(itemNameField);
         String seller = SessionManager.getInstance().getUsername();
         String extraInfo = text(extraInfoField);
 
-        if (type == null || itemName.isEmpty()) {
+        if (displayType == null || itemName.isEmpty()) {
             workspace.showMessage("Nhap day du loai san pham va ten san pham.", false);
+            return;
+        }
+        if ("general".equals(type) && extraInfo.isEmpty()) {
+            workspace.showMessage("Nhap ten danh muc cho loai san pham tu chon.", false);
             return;
         }
 
@@ -138,14 +144,26 @@ public class AuctionCreateController {
         }
     }
 
-    private void updateExtraInfoPrompt(String type) {
-        if ("art".equals(type)) {
-            extraInfoField.setPromptText("Tac gia");
-        } else if ("vehicle".equals(type)) {
-            extraInfoField.setPromptText("Hang xe");
+    private void updateExtraInfoPrompt(String displayType) {
+        if ("Nghệ thuật".equals(displayType)) {
+            extraInfoField.setPromptText("Tên tác giả");
+        } else if ("Xe cộ".equals(displayType)) {
+            extraInfoField.setPromptText("Hãng xe");
+        } else if ("Khác (tùy chỉnh)".equals(displayType)) {
+            extraInfoField.setPromptText("Tên danh mục (VD: Đồ cổ, Thực phẩm, ...)");
         } else {
-            extraInfoField.setPromptText("Thuong hieu");
+            extraInfoField.setPromptText("Thương hiệu");
         }
+    }
+
+    private String mapDisplayTypeToKey(String displayType) {
+        if (displayType == null) return "general";
+        return switch (displayType) {
+            case "Điện tử" -> "electronics";
+            case "Nghệ thuật" -> "art";
+            case "Xe cộ" -> "vehicle";
+            default -> "general";
+        };
     }
 
     private String text(TextField field) {

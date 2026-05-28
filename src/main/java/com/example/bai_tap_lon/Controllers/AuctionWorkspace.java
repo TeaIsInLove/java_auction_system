@@ -1,6 +1,7 @@
 package com.example.bai_tap_lon.Controllers;
 
 import com.example.bai_tap_lon.auth.*;
+import com.example.bai_tap_lon.exception.AuctionException;
 import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.model.auction.AuctionManager;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
@@ -21,8 +22,12 @@ import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class AuctionWorkspace {
     private static final AuctionWorkspace INSTANCE = new AuctionWorkspace();
@@ -89,16 +94,81 @@ public final class AuctionWorkspace {
                                  LocalDateTime startTime, LocalDateTime endTime,
                                  String sellerName, String extraInfo) {
         Auction auction = buildAuction(type, itemName, description, startingPrice, startTime, endTime, sellerName, extraInfo);
+        auction.setPendingApproval();
         auctionManager.addAuction(auction);
         auctions.add(auction);
         auctionRepository.insert(auction);
         selectedAuction.set(auction);
-        appendLog("Tao phien moi: " + itemName + " - " + money(startingPrice));
-        showMessage("Da tao phien dau gia moi.", true);
+        appendLog("Tao phien moi (cho duyet): " + itemName + " - " + money(startingPrice));
+        showMessage("Phiên đã tạo và đang chờ admin duyệt.", true);
         touch();
         AuctionClient.getInstance().send(
                 new NetworkMessage(NetworkMessage.Type.AUCTION_CREATED, auction.getId(), sellerName, startingPrice, itemName));
         return auction;
+    }
+
+    /**
+     * Admin duyệt phiên đấu giá: chuyển PENDING_APPROVAL → OPEN.
+     */
+    public boolean approveAuction(String auctionId, String adminUsername) {
+        Auction auction = auctions.stream()
+                .filter(a -> a.getId().equals(auctionId))
+                .findFirst().orElse(null);
+        if (auction == null) {
+            showMessage("Không tìm thấy phiên đấu giá.", false);
+            return false;
+        }
+        if (auction.getStatus() != AuctionStatus.PENDING_APPROVAL) {
+            showMessage("Phiên này không ở trạng thái chờ duyệt.", false);
+            return false;
+        }
+        auction.approveAuction();
+        auctionRepository.update(auction);
+        appendLog("Admin " + adminUsername + " da duyet phien: " + auction.getItem().getName());
+        showMessage("Đã duyệt phiên đấu giá.", true);
+        touch();
+        return true;
+    }
+
+    /**
+     * Trả về danh sách các phiên đang chờ duyệt.
+     */
+    public List<Auction> getPendingApprovalAuctions() {
+        List<Auction> pending = new ArrayList<>();
+        for (Auction a : auctions) {
+            if (a.getStatus() == AuctionStatus.PENDING_APPROVAL) {
+                pending.add(a);
+            }
+        }
+        return pending;
+    }
+
+    /**
+     * Khởi động scheduler tự động xóa phiên quá 12 giờ chưa được duyệt.
+     * Gọi một lần khi ứng dụng khởi động.
+     */
+    public void startPendingApprovalCleaner() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "pending-approval-cleaner");
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.scheduleAtFixedRate(() -> {
+            LocalDateTime cutoff = LocalDateTime.now().minusHours(12);
+            List<Auction> toDelete = auctions.stream()
+                    .filter(a -> a.getStatus() == AuctionStatus.PENDING_APPROVAL)
+                    .filter(a -> a.getCreatedAt() != null && a.getCreatedAt().isBefore(cutoff))
+                    .toList();
+            for (Auction a : toDelete) {
+                javafx.application.Platform.runLater(() -> {
+                    auctionManager.getActiveAuctions().remove(a);
+                    auctions.remove(a);
+                    auctionRepository.delete(a.getId());
+                    appendLog("Tu dong xoa phien cho duyet qua 12 gio: " + a.getItem().getName());
+                    touch();
+                });
+            }
+        }, 30, 3600, TimeUnit.SECONDS);
     }
 
     /** Người dùng hiện tại có phải chủ phiên (người bán / người tạo) không. */
@@ -228,7 +298,7 @@ public final class AuctionWorkspace {
             // Trigger auto-bids from other registered bidders
             AutoBidManager.getInstance().triggerAutoBids(auction, bidderName.trim(), this);
             return true;
-        } catch (Exception ex) {
+        } catch (AuctionException ex) {
             showMessage(ex.getMessage(), false);
             return false;
         }

@@ -3,18 +3,23 @@ package com.example.bai_tap_lon.Controllers;
 import com.example.bai_tap_lon.auth.AppUser;
 import com.example.bai_tap_lon.auth.DatabaseManager;
 import com.example.bai_tap_lon.auth.UserRepository;
+import com.example.bai_tap_lon.model.auction.Auction;
 import com.example.bai_tap_lon.session.SessionManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -25,8 +30,10 @@ public class ListController {
     @FXML private TableColumn<AppUser, String> roleCol;
     @FXML private TableColumn<AppUser, String> balanceCol;
     @FXML private TableColumn<AppUser, Void> actionsCol;
+    @FXML private Button pendingApprovalBtn;
 
     private final UserRepository userRepository = new UserRepository(new DatabaseManager());
+    private final AuctionWorkspace workspace = AuctionWorkspace.getInstance();
     private static final DecimalFormat VND_FMT;
 
     static {
@@ -148,6 +155,84 @@ public class ListController {
     @FXML
     public void handleRefresh() {
         loadUsers();
+    }
+
+    @FXML
+    public void handleApprovePendingAuctions() {
+        workspace.initialize();
+        List<Auction> pending = workspace.getPendingApprovalAuctions();
+
+        Stage dialog = new Stage();
+        dialog.setTitle("Duyệt phiên đấu giá");
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(tableView.getScene().getWindow());
+
+        VBox root = new VBox(12);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #f4f7fb;");
+
+        Label titleLabel = new Label("Phiên đấu giá chờ duyệt (" + pending.size() + ")");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        root.getChildren().add(titleLabel);
+
+        if (pending.isEmpty()) {
+            root.getChildren().add(new Label("Không có phiên nào chờ duyệt."));
+        } else {
+            ScrollPane scroll = new ScrollPane();
+            VBox list = new VBox(10);
+            list.setPadding(new Insets(8));
+
+            for (Auction auction : pending) {
+                HBox row = new HBox(12);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setPadding(new Insets(10));
+                row.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #dbe3ef; -fx-border-radius: 8;");
+
+                VBox info = new VBox(4);
+                HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
+                String sellerName = auction.getSeller() != null ? auction.getSeller().getUsername() : "N/A";
+                info.getChildren().addAll(
+                    new Label(auction.getItem().getName() + " [" + auction.getItem().getItemCategory() + "]"),
+                    new Label("Người tạo: " + sellerName + " | Giá khởi điểm: " + AuctionWorkspace.formatVnd(auction.getItem().getStartingPrice()) + " đ"),
+                    new Label("Tạo lúc: " + (auction.getCreatedAt() != null ? auction.getCreatedAt().toString().substring(0, 16) : "N/A"))
+                );
+                info.getChildren().forEach(n -> ((Label) n).setStyle("-fx-font-size: 12px;"));
+                ((Label) info.getChildren().get(0)).setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+                Button approveBtn = new Button("✔ Duyệt");
+                approveBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 6 14;");
+
+                Button rejectBtn = new Button("✘ Từ chối");
+                rejectBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 6 14;");
+
+                String adminName = SessionManager.getInstance().getUsername();
+                approveBtn.setOnAction(e -> {
+                    workspace.approveAuction(auction.getId(), adminName);
+                    list.getChildren().remove(row);
+                    titleLabel.setText("Phiên đấu giá chờ duyệt (" + workspace.getPendingApprovalAuctions().size() + ")");
+                });
+                rejectBtn.setOnAction(e -> {
+                    workspace.deleteAuction(auction, adminName, true);
+                    list.getChildren().remove(row);
+                    titleLabel.setText("Phiên đấu giá chờ duyệt (" + workspace.getPendingApprovalAuctions().size() + ")");
+                });
+
+                row.getChildren().addAll(info, approveBtn, rejectBtn);
+                list.getChildren().add(row);
+            }
+
+            scroll.setContent(list);
+            scroll.setFitToWidth(true);
+            scroll.setPrefHeight(400);
+            root.getChildren().add(scroll);
+        }
+
+        Button closeBtn = new Button("Đóng");
+        closeBtn.setOnAction(e -> dialog.close());
+        root.getChildren().add(closeBtn);
+
+        dialog.setScene(new Scene(root, 700, 500));
+        dialog.showAndWait();
     }
 
     @FXML

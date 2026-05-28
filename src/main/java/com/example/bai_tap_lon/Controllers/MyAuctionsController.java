@@ -118,7 +118,9 @@ public class MyAuctionsController {
 
         long total = myAuctions.size();
         long running = myAuctions.stream()
-                .filter(a -> a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN)
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                          || a.getStatus() == AuctionStatus.OPEN
+                          || a.getStatus() == AuctionStatus.PENDING_APPROVAL)
                 .count();
         long completed = myAuctions.stream()
                 .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
@@ -137,9 +139,11 @@ public class MyAuctionsController {
     private void loadAuctions() {
         List<Auction> myAuctions = getMyAuctions();
 
-        // Running auctions
+        // Running auctions (including pending approval and open)
         List<Auction> runningList = myAuctions.stream()
-                .filter(a -> a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN)
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING
+                          || a.getStatus() == AuctionStatus.OPEN
+                          || a.getStatus() == AuctionStatus.PENDING_APPROVAL)
                 .collect(Collectors.toList());
 
         // Finished auctions
@@ -232,9 +236,18 @@ public class MyAuctionsController {
         HBox catBox = new HBox(8);
         catBox.getChildren().addAll(nameLabel, categoryLabel);
 
-        // Status badge
-        Label statusBadge = new Label(auction.getStatus() == AuctionStatus.RUNNING ? "ĐANG DIỄN RA" : "SẮP BẮT ĐẦU");
-        statusBadge.getStyleClass().add(auction.getStatus() == AuctionStatus.RUNNING ? "status-tag-running" : "status-tag-open");
+        String badgeText = switch (auction.getStatus()) {
+            case RUNNING -> "ĐANG DIỄN RA";
+            case PENDING_APPROVAL -> "CHỜ DUYỆT";
+            default -> "SẮP BẮT ĐẦU";
+        };
+        String badgeStyle = switch (auction.getStatus()) {
+            case RUNNING -> "status-tag-running";
+            case PENDING_APPROVAL -> "status-tag-finished";
+            default -> "status-tag-open";
+        };
+        Label statusBadge = new Label(badgeText);
+        statusBadge.getStyleClass().add(badgeStyle);
 
         header.getChildren().addAll(infoBox, statusBadge);
         infoBox.getChildren().add(catBox);
@@ -631,8 +644,9 @@ public class MyAuctionsController {
             Parent root = loader.load();
             Stage stage = (Stage) topUsernameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Không thể mở Lịch sử đấu giá:\n" + e.getMessage()).showAndWait();
         }
     }
 

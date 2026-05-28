@@ -90,27 +90,12 @@
                         <Button styleClass="menu-button-active"
                                 text="🕘  Lịch sử đấu giá"/>
 
-                        <!-- TÀI CHÍNH -->
-                        <Label styleClass="menu-section" text="TÀI CHÍNH"/>
-
-                        <Button styleClass="menu-button"
-                                text="🏆  Phiên đã thắng"/>
-
-                        <Button styleClass="menu-button"
-                                text="💰  Ví của tôi"/>
-
-                        <Button styleClass="menu-button"
-                                text="🔔  Thông báo"/>
-
                         <!-- CÁ NHÂN -->
                         <Label styleClass="menu-section" text="CÁ NHÂN"/>
 
                         <Button onAction="#handleOpenProfile"
                                 styleClass="menu-button"
                                 text="👤  Thông tin cá nhân"/>
-
-                        <Button styleClass="menu-button"
-                                text="⚙  Cài đặt"/>
 
                     </VBox>
 

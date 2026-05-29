@@ -95,16 +95,27 @@ public class AuctionController {
     }
 
     private void setupFilters() {
-        // Status filter options
-        statusFilter.setItems(FXCollections.observableArrayList(
-                "Tất cả",
-                "Chờ duyệt",
-                "Chưa bắt đầu",
-                "Đang diễn ra",
-                "Đã kết thúc",
-                "Đã thanh toán",
-                "Đã hủy"
-        ));
+        // Status filter options — admins can also filter by "Chờ duyệt"
+        if (isAdmin) {
+            statusFilter.setItems(FXCollections.observableArrayList(
+                    "Tất cả",
+                    "Chờ duyệt",
+                    "Chưa bắt đầu",
+                    "Đang diễn ra",
+                    "Đã kết thúc",
+                    "Đã thanh toán",
+                    "Đã hủy"
+            ));
+        } else {
+            statusFilter.setItems(FXCollections.observableArrayList(
+                    "Tất cả",
+                    "Chưa bắt đầu",
+                    "Đang diễn ra",
+                    "Đã kết thúc",
+                    "Đã thanh toán",
+                    "Đã hủy"
+            ));
+        }
         statusFilter.setValue("Tất cả");
 
         // Category filter options
@@ -154,7 +165,15 @@ public class AuctionController {
             refreshAuctionCards();
         });
 
-        // Refresh list view when any remote client changes an auction
+        registerNetworkListener();
+    }
+
+    /**
+     * (Re-)registers the network message handler on the shared AuctionClient.
+     * Called once at startup and again whenever the auction room is closed,
+     * because AuctionRoomController.dispose() clears the handler.
+     */
+    private void registerNetworkListener() {
         AuctionClient.getInstance().setOnMessageReceived(msg -> Platform.runLater(() -> {
             workspace.reloadAuctionFromDb(msg.getAuctionId());
             applyFilters();
@@ -267,6 +286,8 @@ public class AuctionController {
 
         filteredAuctions.setAll(
                 workspace.getAuctions().stream()
+                        // Non-admins never see PENDING_APPROVAL auctions on the main dashboard
+                        .filter(a -> isAdmin || a.getStatus() != AuctionStatus.PENDING_APPROVAL)
                         .filter(a -> matchesSearch(a, searchText))
                         .filter(a -> matchesStatus(a, statusValue))
                         .filter(a -> matchesCategory(a, categoryValue))
@@ -727,6 +748,10 @@ public class AuctionController {
             stage.setResizable(false);
             stage.showAndWait();
 
+            // After the create-auction dialog closes, switch to "All Auctions" and
+            // refresh so the seller can immediately see their pending auction.
+            showAllAuctionsView();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -748,7 +773,14 @@ public class AuctionController {
             Stage stage = new Stage();
             stage.setTitle(auction.getItem().getName());
             stage.setScene(new Scene(root));
-            stage.setOnHidden(e -> controller.dispose());
+            stage.setOnHidden(e -> {
+                controller.dispose();
+                // AuctionRoomController.dispose() clears the shared network handler.
+                // Restore it so the main dashboard keeps receiving live updates.
+                registerNetworkListener();
+                applyFilters();
+                refreshAuctionCards();
+            });
             controller.initializeView();
             stage.show();
 

@@ -26,6 +26,22 @@ public class BidRepository {
                 INSERT INTO bid_history (id, auction_id, bidder_name, bidder_email, bid_amount, bid_time)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
+        executeSaveBid(sql, auctionId, bid);
+    }
+
+    /**
+     * INSERT OR IGNORE — safe to call for bids received from remote clients
+     * that may already exist in the local DB (duplicate-safe).
+     */
+    public void saveBidIfAbsent(String auctionId, BidTransaction bid) {
+        String sql = """
+                INSERT OR IGNORE INTO bid_history (id, auction_id, bidder_name, bidder_email, bid_amount, bid_time)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """;
+        executeSaveBid(sql, auctionId, bid);
+    }
+
+    private void executeSaveBid(String sql, String auctionId, BidTransaction bid) {
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, bid.getId());

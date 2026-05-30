@@ -20,6 +20,13 @@ public class AuctionClient {
     private volatile boolean connected;
     private Consumer<NetworkMessage> onMessageReceived;
 
+    /**
+     * Low-level sync handler — called BEFORE the UI callback on every incoming message.
+     * Use this to keep the local SQLite DB in sync with the server host's data.
+     * Runs on the background reader thread (safe for JDBC, NOT safe for JavaFX UI).
+     */
+    private Consumer<NetworkMessage> dbSyncHandler;
+
     private AuctionClient() {}
 
     public static AuctionClient getInstance() {
@@ -55,8 +62,15 @@ public class AuctionClient {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             while (connected) {
                 NetworkMessage msg = (NetworkMessage) in.readObject();
-                if (msg != null && onMessageReceived != null) {
-                    onMessageReceived.accept(msg);
+                if (msg != null) {
+                    // 1. DB sync first (background thread — safe for JDBC)
+                    if (dbSyncHandler != null) {
+                        dbSyncHandler.accept(msg);
+                    }
+                    // 2. UI update callback (caller must use Platform.runLater for JavaFX)
+                    if (onMessageReceived != null) {
+                        onMessageReceived.accept(msg);
+                    }
                 }
             }
         } catch (EOFException | SocketException ignored) {
@@ -89,6 +103,15 @@ public class AuctionClient {
      */
     public void setOnMessageReceived(Consumer<NetworkMessage> handler) {
         this.onMessageReceived = handler;
+    }
+
+    /**
+     * Register a low-level DB-sync callback that runs BEFORE the UI callback.
+     * Use to keep the local SQLite DB in sync with the server host's state.
+     * The handler runs on the background reader thread — safe for JDBC, not for JavaFX.
+     */
+    public void setDbSyncHandler(Consumer<NetworkMessage> handler) {
+        this.dbSyncHandler = handler;
     }
 
     public boolean isConnected() {

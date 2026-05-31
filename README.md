@@ -1,153 +1,215 @@
-# Java Auction System
+# Hệ Thống Đấu Giá Trực Tuyến
 
-A real-time online auction platform built with **JavaFX** and **SQLite**, developed as a university assignment for *Lập Trình Nâng Cao 2026*.
+Ứng dụng desktop mô phỏng sàn đấu giá trực tuyến thời gian thực, xây dựng bằng **JavaFX + SQLite + TCP Socket**, phát triển trong khuôn khổ môn **Lập Trình Nâng Cao 2026** — Trường Đại học Công nghệ, ĐHQGHN.
 
----
-
-## Features
-
-### Core (Bắt buộc)
-| # | Feature | Status |
-|---|---------|--------|
-| 1 | User registration & login with SHA-256 password hashing | ✅ |
-| 2 | Role-based access: **ADMIN** and **USER** | ✅ |
-| 3 | Create, start, and end auction sessions | ✅ |
-| 4 | Real-time bidding with thread-safe `ReentrantLock` | ✅ |
-| 5 | Bid history per auction | ✅ |
-| 6 | Payment tracking (PAID / FINISHED / CANCELED) | ✅ |
-| 7 | Item types: Electronics, Art, Vehicle (Factory pattern) | ✅ |
-| 8 | Persistent storage in SQLite via JDBC | ✅ |
-| 9 | Unit tests (JUnit 5) with CI via GitHub Actions | ✅ |
-| 10 | Admin user management (view, promote/demote, delete) | ✅ |
-
-### Optional (Tùy chọn)
-| Feature | Status |
-|---------|--------|
-| **Anti-snipe** — bids placed within 5 min of end time extend the auction by 5 min | ✅ |
-| **Auto-bidding** — register a max price; the system bids automatically on your behalf | ✅ |
-| **Bid trend chart** — live LineChart showing price progression per auction | ✅ |
+**Phạm vi hệ thống:** Hỗ trợ 2 vai trò (Admin / User), 3 loại vật phẩm (Electronics, Art, Vehicle), nhiều client kết nối đồng thời qua TCP Socket, cập nhật giá theo thời gian thực.
 
 ---
 
-## Design Patterns Used
+## Danh sách chức năng đã hoàn thành
 
-| Pattern | Where |
-|---------|-------|
-| **Singleton** | `AuctionManager`, `AuctionWorkspace`, `SessionManager`, `AuctionClient`, `AutoBidManager` |
-| **Observer** | `AuctionSubject` / `AuctionObserver` — views subscribe to auction events |
-| **Factory** | `ItemFactory.createItem(type, ...)` — creates Electronics / Art / Vehicle |
-| **MVC** | JavaFX FXML controllers + model classes + repository layer |
+### Bắt buộc
+| # | Chức năng | Trạng thái |
+|---|-----------|-----------|
+| 1 | Đăng ký / Đăng nhập với mã hóa mật khẩu SHA-256 | ✅ |
+| 2 | Phân quyền Admin / User | ✅ |
+| 3 | Tạo, duyệt, bắt đầu, kết thúc phiên đấu giá | ✅ |
+| 4 | Đặt giá thời gian thực, an toàn đa luồng (ReentrantLock) | ✅ |
+| 5 | Lịch sử đặt giá theo phiên | ✅ |
+| 6 | Thanh toán tự động (PAID / FINISHED / CANCELED) | ✅ |
+| 7 | 3 loại vật phẩm: Electronics, Art, Vehicle (Factory Pattern) | ✅ |
+| 8 | Lưu trữ bền vững bằng SQLite qua JDBC | ✅ |
+| 9 | Unit tests JUnit 5 + CI tự động GitHub Actions | ✅ |
+| 10 | Admin quản lý người dùng (xem, đổi vai trò, xóa) | ✅ |
+
+### Tùy chọn (Bonus)
+| Chức năng | Trạng thái |
+|-----------|-----------|
+| **Anti-snipe** — tự động gia hạn 5 phút khi có bid trong 5 phút cuối | ✅ |
+| **Auto-bidding** — đăng ký giá tối đa, hệ thống tự đặt giá thay | ✅ |
+| **Biểu đồ xu hướng giá** — LineChart cập nhật thời gian thực trong phòng đấu giá | ✅ |
 
 ---
 
-## Architecture
+## Công nghệ sử dụng
+
+| Thành phần | Công nghệ |
+|-----------|-----------|
+| Giao diện | JavaFX 21 + FXML + CSS |
+| Cơ sở dữ liệu | SQLite (sqlite-jdbc 3.45) |
+| Mạng | Java TCP Socket (cổng 9999) |
+| Công cụ build | Apache Maven 3.9+ |
+| Kiểm thử | JUnit 5 (Jupiter) |
+| CI/CD | GitHub Actions |
+| Phiên bản Java | JDK 21 LTS (khuyến nghị) hoặc JDK 25 |
+| Hệ điều hành | Windows / macOS / Linux |
+
+---
+
+## Yêu cầu cài đặt
+
+- **JDK 21+** — tải tại https://adoptium.net
+- **Maven 3.9+** — hoặc dùng wrapper `mvnw` / `mvnw.cmd` đi kèm (không cần cài thêm)
+- Không cần cài SQLite riêng — driver đã nhúng sẵn trong file jar
+
+---
+
+## Cấu trúc thư mục
 
 ```
-Launcher (JavaFX Application)
-│
-├── Controllers/          UI controllers (JavaFX FXML)
-│   ├── AuctionWorkspace  Central business-logic facade (Singleton)
-│   ├── AutoBidManager    Auto-bid registrations (Singleton)
-│   └── ...
-│
-├── model/
-│   ├── auction/          Auction, AuctionManager, Observer interfaces
-│   └── entity/           Item (Art/Electronics/Vehicle), BidTransaction, User types
-│
-├── auth/                 Repositories (SQLite JDBC), AuthService, PasswordUtil
-├── session/              SessionManager — holds the currently logged-in user
-├── network/              AuctionServer, AuctionClient, NetworkMessage (real-time sync)
-└── exception/            Custom exceptions (AuctionException hierarchy)
+java_auction_system/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/bai_tap_lon/
+│   │   │   ├── Controllers/     JavaFX controllers + AuctionWorkspace (Facade) + AutoBidManager
+│   │   │   ├── auth/            Repository (JDBC), AuthService, PasswordUtil, DatabaseManager
+│   │   │   ├── exception/       Phân cấp ngoại lệ tùy chỉnh (AuctionException...)
+│   │   │   ├── model/           Domain model: Auction, Item, User, BidTransaction
+│   │   │   ├── network/         AuctionServer, AuctionClient, NetworkMessage (đồng bộ TCP)
+│   │   │   └── session/         SessionManager
+│   │   └── resources/
+│   │       └── .../Views/
+│   │           ├── fxml/        10 màn hình FXML
+│   │           └── css/         Stylesheet
+│   └── test/                    Unit tests (JUnit 5)
+├── .github/workflows/ci.yml     Cấu hình GitHub Actions CI
+└── pom.xml
 ```
 
-### Real-time Updates
-The app uses a lightweight embedded TCP server (`AuctionServer` on port 9999).  
-- The first JVM instance starts the server automatically.  
-- Subsequent instances connect as clients.  
-- When a bid is placed, an `NetworkMessage` is broadcast to all connected clients.  
-- Each client reloads the affected auction from SQLite so that stale in-memory state is never displayed.
-
 ---
 
-## Prerequisites
-
-| Tool | Version |
-|------|---------|
-| JDK  | 21 LTS or 25+ |
-| Maven | 3.9+ (or use the included `mvnw` wrapper) |
-
----
-
-## Running the Application
+## Cách build chương trình
 
 ```bash
-# Clone
-git clone https://github.com/<your-org>/java_auction_system.git
+# Clone repository
+git clone https://github.com/TeaIsInLove/java_auction_system.git
 cd java_auction_system
 
-# Build and run (Windows)
+# Windows
+mvnw.cmd clean package -DskipTests
+
+# macOS / Linux (cấp quyền thực thi lần đầu)
+chmod +x mvnw
+./mvnw clean package -DskipTests
+```
+
+---
+
+## Cách chạy chương trình
+
+### Chạy đơn (1 cửa sổ)
+
+```bash
+# Windows
 mvnw.cmd javafx:run
 
-# Build and run (macOS / Linux)
+# macOS / Linux
 ./mvnw javafx:run
 ```
 
-On first run, the SQLite database is created automatically at `~/.auctionsystem/app.db`.
-
-### Default Admin Account
-| Field | Value |
-|-------|-------|
-| Email | `admin@local` |
-| Password | `admin123` |
+Lần đầu chạy, database SQLite được tạo tự động tại `~/.auctionsystem/app.db`.
 
 ---
 
-## Running Tests
+### Chạy Server + nhiều Client (demo đa máy khách)
+
+> Mở **nhiều cửa sổ terminal** và chạy theo thứ tự sau:
+
+**Bước 1 — Cửa sổ 1 (Server):** Chạy instance đầu tiên
 
 ```bash
+# Windows
+mvnw.cmd javafx:run
+
+# macOS / Linux
+./mvnw javafx:run
+```
+
+Instance đầu tiên tự động khởi động **AuctionServer TCP trên cổng 9999**.
+
+**Bước 2 — Cửa sổ 2, 3, … (Client):** Mở thêm terminal, chạy cùng lệnh
+
+```bash
+# Windows
+mvnw.cmd javafx:run
+
+# macOS / Linux
+./mvnw javafx:run
+```
+
+Các instance sau tự động kết nối vào server đang chạy.  
+Khi một client đặt giá → **tất cả client còn lại nhận cập nhật ngay lập tức**.
+
+---
+
+**Chạy trên 2 máy khác nhau (cùng mạng LAN):**
+
+Trên **Máy B**, tạo file `~/.auctionsystem/server.properties` với nội dung:
+
+```properties
+server.host=<địa chỉ IP của Máy A trên mạng LAN>
+```
+
+Sau đó chạy bình thường — Máy B sẽ tự kết nối vào server của Máy A.
+
+---
+
+### Tài khoản Admin mặc định
+
+| Trường | Giá trị |
+|--------|---------|
+| Email | `admin@local` |
+| Mật khẩu | `admin123` |
+
+---
+
+## Chạy kiểm thử
+
+```bash
+# Windows
+mvnw.cmd clean test
+
+# macOS / Linux
 ./mvnw clean test
 ```
 
-Tests run headless (no JavaFX display required) via `maven-surefire-plugin` with `useModulePath=false`.
+Kiểm thử chạy ở chế độ headless (không cần màn hình) nhờ cấu hình `useModulePath=false` trong surefire plugin.
 
 ---
 
 ## CI / CD
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and pull request to `main` / `dev`:
-1. Checks out code
-2. Sets up JDK 21 (Temurin)
-3. Runs `mvn clean test`
-4. Uploads Surefire test reports as build artifacts
+GitHub Actions (`.github/workflows/ci.yml`) tự động chạy trên mỗi lần push hoặc pull request vào nhánh `main` và `dev`:
+
+1. Checkout mã nguồn
+2. Cài đặt JDK 21 (Temurin)
+3. Chạy `mvn clean test`
+4. Upload kết quả Surefire làm artifact
 
 ---
 
-## Project Structure
+## Design Patterns sử dụng
 
-```
-src/
-├── main/
-│   ├── java/com/example/bai_tap_lon/
-│   │   ├── Controllers/        JavaFX controllers + workspace facade
-│   │   ├── auth/               Repositories, AuthService, DB manager
-│   │   ├── exception/          Custom exception hierarchy
-│   │   ├── model/              Domain model (Auction, Item, User, …)
-│   │   ├── network/            TCP server/client for real-time sync
-│   │   └── session/            SessionManager
-│   └── resources/
-│       └── com/example/auctionsystem/Views/
-│           ├── fxml/           FXML layout files
-│           └── css/            Stylesheets
-└── test/
-    └── java/com/example/bai_tap_lon/
-        ├── AuctionTest.java
-        ├── AuthServiceTest.java
-        ├── ItemFactoryTest.java
-        └── PasswordUtilTest.java
-```
+| Pattern | Nơi áp dụng |
+|---------|------------|
+| **Singleton** | `AuctionManager`, `AuctionWorkspace`, `SessionManager`, `AuctionClient`, `AutoBidManager` |
+| **Facade** | `AuctionWorkspace` — tập trung toàn bộ business logic, controller không gọi trực tiếp xuống DB |
+| **Observer** | `AuctionSubject` / `AuctionObserver` — view tự cập nhật khi có bid mới |
+| **Factory** | `ItemFactory.createItem(type, ...)` — tạo Electronics / Art / Vehicle |
+| **MVC** | JavaFX FXML (View) + Controller + Repository (Model) |
 
 ---
 
-## License
+## Kiến trúc cập nhật thời gian thực
 
-This project is for educational purposes only.
+- Instance đầu tiên khởi động **AuctionServer** (TCP, cổng 9999) trong daemon thread
+- Các instance sau kết nối như **AuctionClient**
+- Khi bid được đặt → broadcast `NetworkMessage` tới tất cả client
+- Mỗi client đồng bộ SQLite local trước → `reloadAuctionFromDb()` → `Platform.runLater()` cập nhật giao diện
+
+---
+
+## Tài liệu
+
+- **Báo cáo PDF:** [Điền link sau khi có]
+- **Video demo:** [Điền link sau khi quay xong]

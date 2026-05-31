@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -79,9 +81,36 @@ public class DatabaseManager {
                 } catch (SQLException e) {
                     // Column đã tồn tại, bỏ qua
                 }
+
+                // Seed tài khoản admin mặc định nếu chưa tồn tại
+                seedDefaultAdmin(statement);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Khong the khoi tao co so du lieu SQLite.", ex);
+        }
+    }
+
+    private static void seedDefaultAdmin(Statement statement) throws SQLException {
+        String adminEmail = "admin@local";
+        String adminName = "Administrator";
+        String adminPasswordHash = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
+        String adminRole = "ADMIN";
+
+        ResultSet rs = statement.executeQuery(
+                "SELECT 1 FROM users WHERE email = '" + adminEmail + "' LIMIT 1");
+        boolean adminExists = rs.next();
+        rs.close();
+
+        if (!adminExists) {
+            try (PreparedStatement ps = statement.getConnection().prepareStatement(
+                    "INSERT INTO users(full_name, email, password_hash, role, balance) VALUES(?, ?, ?, ?, ?)")) {
+                ps.setString(1, adminName);
+                ps.setString(2, adminEmail);
+                ps.setString(3, adminPasswordHash);
+                ps.setString(4, adminRole);
+                ps.setDouble(5, 100_000_000.0);
+                ps.executeUpdate();
+            }
         }
     }
 }

@@ -49,7 +49,8 @@
 ## Yêu cầu cài đặt
 
 - **JDK 21+** — tải tại https://adoptium.net
-- **Maven 3.9+** — hoặc dùng wrapper `mvnw` / `mvnw.cmd` đi kèm (không cần cài thêm)
+- **Maven 3.9+** — hoặc dùng wrapper `mvnw` đi kèm (không cần cài thêm)
+- **Windows:** Sử dụng [Git Bash](https://git-scm.com/downloads) để chạy lệnh `./mvnw` (CMD và PowerShell không tương thích với wrapper script)
 - Không cần cài SQLite riêng — driver đã nhúng sẵn trong file jar
 
 ---
@@ -85,10 +86,7 @@ java_auction_system/
 git clone https://github.com/TeaIsInLove/java_auction_system.git
 cd java_auction_system
 
-# Windows
-mvnw.cmd clean package -DskipTests
-
-# macOS / Linux (cấp quyền thực thi lần đầu)
+# Windows (Git Bash) / macOS / Linux
 chmod +x mvnw
 ./mvnw clean package -DskipTests
 ```
@@ -100,10 +98,7 @@ chmod +x mvnw
 ### Chạy đơn (1 cửa sổ)
 
 ```bash
-# Windows
-mvnw.cmd javafx:run
-
-# macOS / Linux
+# Windows (Git Bash) / macOS / Linux
 ./mvnw javafx:run
 ```
 
@@ -118,10 +113,7 @@ Lần đầu chạy, database SQLite được tạo tự động tại `~/.aucti
 **Bước 1 — Cửa sổ 1 (Server):** Chạy instance đầu tiên
 
 ```bash
-# Windows
-mvnw.cmd javafx:run
-
-# macOS / Linux
+# Windows (Git Bash) / macOS / Linux
 ./mvnw javafx:run
 ```
 
@@ -130,10 +122,7 @@ Instance đầu tiên tự động khởi động **AuctionServer TCP trên cổ
 **Bước 2 — Cửa sổ 2, 3, … (Client):** Mở thêm terminal, chạy cùng lệnh
 
 ```bash
-# Windows
-mvnw.cmd javafx:run
-
-# macOS / Linux
+# Windows (Git Bash) / macOS / Linux
 ./mvnw javafx:run
 ```
 
@@ -166,10 +155,7 @@ Sau đó chạy bình thường — Máy B sẽ tự kết nối vào server c�
 ## Chạy kiểm thử
 
 ```bash
-# Windows
-mvnw.cmd clean test
-
-# macOS / Linux
+# Windows (Git Bash) / macOS / Linux
 ./mvnw clean test
 ```
 

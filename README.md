@@ -1,6 +1,6 @@
 # Hệ Thống Đấu Giá Trực Tuyến
 
-Ứng dụng desktop mô phỏng sàn đấu giá trực tuyến thời gian thực, xây dựng bằng **JavaFX + SQLite + TCP Socket**, phát triển trong khuôn khổ môn **Lập Trình Nâng Cao 2026** — Trường Đại học Công nghệ, ĐHQGHN.
+Ứng dụng desktop mô phỏng sàn đấu giá trực tuyến thời gian thực, xây dựng bằng **JavaFX + SQLite + TCP Socket**, môn **Lập Trình Nâng Cao 2026** — Trường Đại học Công nghệ, ĐHQGHN.
 
 **Phạm vi hệ thống:** Hỗ trợ 2 vai trò (Admin / User), 3 loại vật phẩm (Electronics, Art, Vehicle), nhiều client kết nối đồng thời qua TCP Socket, cập nhật giá theo thời gian thực.
 
@@ -212,4 +212,4 @@ GitHub Actions (`.github/workflows/ci.yml`) tự động chạy trên mỗi lầ
 ## Tài liệu
 
 - **Báo cáo PDF:** [Điền link sau khi có]
-- **Video demo:** [Điền link sau khi quay xong]
+- **Video demo:** https://youtu.be/mtPrMOAMlX4?si=P8Dcv9RbvmRNx82D

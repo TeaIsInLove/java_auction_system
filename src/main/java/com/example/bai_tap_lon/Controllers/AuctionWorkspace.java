@@ -7,12 +7,17 @@ import com.example.bai_tap_lon.model.auction.AuctionManager;
 import com.example.bai_tap_lon.model.auction.AuctionStatus;
 import com.example.bai_tap_lon.model.entity.BidTransaction;
 import com.example.bai_tap_lon.model.entity.PaymentTransaction;
+import com.example.bai_tap_lon.model.entity.item.Art;
+import com.example.bai_tap_lon.model.entity.item.Electronics;
 import com.example.bai_tap_lon.model.entity.item.Item;
 import com.example.bai_tap_lon.model.entity.item.ItemFactory;
+import com.example.bai_tap_lon.model.entity.item.Vehicle;
 import com.example.bai_tap_lon.model.entity.user.Bidder;
 import com.example.bai_tap_lon.model.entity.user.Seller;
 import com.example.bai_tap_lon.network.AuctionClient;
+import com.example.bai_tap_lon.network.AuctionServer;
 import com.example.bai_tap_lon.network.NetworkMessage;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,11 +33,15 @@ import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public final class AuctionWorkspace {
     private static final AuctionWorkspace INSTANCE = new AuctionWorkspace();
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final DateTimeFormatter LOG_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    /** Field separator used when serialising auction data for cross-machine sync. */
+    private static final String SEP = "";
 
     private final AuctionManager auctionManager = AuctionManager.getInstance();
     private final DatabaseManager databaseManager = new DatabaseManager();
@@ -103,7 +112,8 @@ public final class AuctionWorkspace {
         showMessage("Phiên đã tạo và đang chờ admin duyệt.", true);
         touch();
         AuctionClient.getInstance().send(
-                new NetworkMessage(NetworkMessage.Type.AUCTION_CREATED, auction.getId(), sellerName, startingPrice, itemName));
+                new NetworkMessage(NetworkMessage.Type.AUCTION_CREATED, auction.getId(), sellerName,
+                        startingPrice, serializeAuction(auction)));
         return auction;
     }
 
@@ -292,8 +302,10 @@ public final class AuctionWorkspace {
             appendLog(bidder.getUsername() + " dat " + money(amount) + " cho " + auction.getItem().getName());
             showMessage("Da ghi nhan gia moi: " + money(amount), true);
             touch();
+            // Include bid identity in payload so remote clients can sync their local DB
+            String bidPayload = bid.getId() + SEP + bidderEmail + SEP + bid.getBidTime().format(ISO);
             AuctionClient.getInstance().send(
-                    new NetworkMessage(NetworkMessage.Type.BID_PLACED, auction.getId(), bidderName, amount, ""));
+                    new NetworkMessage(NetworkMessage.Type.BID_PLACED, auction.getId(), bidderName, amount, bidPayload));
 
             // Trigger auto-bids from other registered bidders
             AutoBidManager.getInstance().triggerAutoBids(auction, bidderName.trim(), this);
@@ -372,8 +384,10 @@ public final class AuctionWorkspace {
 
         appendLog("Trang thai: " + auction.getStatus());
         touch();
+        // Include final status in payload so remote clients can update their local DB
         AuctionClient.getInstance().send(
-                new NetworkMessage(NetworkMessage.Type.AUCTION_ENDED, auction.getId(), actorUsername, 0, ""));
+                new NetworkMessage(NetworkMessage.Type.AUCTION_ENDED, auction.getId(), actorUsername, 0,
+                        auction.getStatus().name()));
         return true;
     }
 
@@ -767,5 +781,204 @@ public final class AuctionWorkspace {
 
     private void touch() {
         revision.set(revision.get() + 1);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Cross-machine sync helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Register this workspace as the data provider for an embedded AuctionServer.
+     * When a remote client sends SYNC_REQUEST, the server calls back here and we
+     * push all current auctions to that client.
+     */
+    public void registerSyncHandler(AuctionServer server) {
+        server.setOnSyncRequest(sendFn -> sendAllAuctionsTo(sendFn));
+    }
+
+    /**
+     * Send every in-memory auction to a specific client (used during initial sync).
+     * Called from the server's worker thread — JDBC is safe here.
+     */
+    public void sendAllAuctionsTo(Consumer<NetworkMessage> sendFn) {
+        List<Auction> snapshot = new ArrayList<>(auctions);
+        for (Auction a : snapshot) {
+            try {
+                sendFn.accept(new NetworkMessage(
+                        NetworkMessage.Type.AUCTION_DATA,
+                        a.getId(),
+                        a.getSeller() != null ? a.getSeller().getUsername() : "",
+                        a.getItem() != null ? a.getItem().getCurrentHighestBid() : 0,
+                        serializeAuction(a)));
+            } catch (Exception e) {
+                System.err.println("[AuctionWorkspace] Error serialising auction for sync: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Universal DB-sync handler — called by AuctionClient's dbSyncHandler on the
+     * background reader thread BEFORE any UI callback fires.
+     * Keeps the local SQLite DB consistent with the server host's state so that
+     * subsequent reloadAuctionFromDb() calls always find fresh data.
+     */
+    public void handleNetworkSync(NetworkMessage msg) {
+        try {
+            switch (msg.getType()) {
+                case AUCTION_DATA, AUCTION_CREATED -> importAuctionFromNetwork(msg);
+                case BID_PLACED                    -> importBidFromNetwork(msg);
+                case AUCTION_STARTED               -> updateAuctionStatusInDb(msg.getAuctionId(), AuctionStatus.RUNNING);
+                case AUCTION_ENDED                 -> {
+                    String st = msg.getPayload();
+                    if (st != null && !st.isBlank()) {
+                        try { updateAuctionStatusInDb(msg.getAuctionId(), AuctionStatus.valueOf(st)); }
+                        catch (IllegalArgumentException ignored) {}
+                    }
+                }
+                default -> { /* SYNC_REQUEST, PING — no DB action needed */ }
+            }
+        } catch (Exception e) {
+            System.err.println("[AuctionWorkspace] handleNetworkSync error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Import a full auction record sent by the server host.
+     * If the auction is already in the local DB, the in-memory list is refreshed.
+     * If it is new, it is inserted into the DB and then loaded into memory.
+     * Runs on a background thread — Platform.runLater() is used for list updates.
+     */
+    private void importAuctionFromNetwork(NetworkMessage msg) {
+        String payload = msg.getPayload();
+        if (payload == null || payload.isBlank()) return;
+
+        String auctionId = msg.getAuctionId();
+        try {
+            String[] p = payload.split(SEP, -1);
+            if (p.length < 12) return;
+
+            String type          = p[0];
+            String name          = p[1];
+            String desc          = p[2];
+            double startingPrice = Double.parseDouble(p[3]);
+            double currentBid    = Double.parseDouble(p[4]);
+            LocalDateTime startTime  = LocalDateTime.parse(p[5], ISO);
+            LocalDateTime endTime    = LocalDateTime.parse(p[6], ISO);
+            String sellerName    = p[7];
+            String sellerEmail   = p[8];
+            String extraInfo     = p[9];
+            AuctionStatus status = AuctionStatus.valueOf(p[10]);
+            LocalDateTime createdAt  = LocalDateTime.parse(p[11], ISO);
+
+            if (auctionRepository.findById(auctionId) != null) {
+                // Already in DB — just make sure it's loaded into the in-memory list
+                Platform.runLater(() -> reloadAuctionFromDb(auctionId));
+                return;
+            }
+
+            // Build the Auction object and persist it locally
+            Item item = ItemFactory.createItem(type, name, desc, startingPrice, startTime, endTime, extraInfo);
+            item.setCurrentHighestBid(currentBid);
+            Seller seller = new Seller(sellerName, "", sellerEmail, sellerName);
+            Auction auction = new Auction(item, seller);
+            auction.setId(auctionId);
+            auction.setCreatedAt(createdAt);
+            auction.restorePersistedState(status);
+
+            auctionRepository.insert(auction);
+            Platform.runLater(() -> reloadAuctionFromDb(auctionId));
+
+        } catch (Exception e) {
+            System.err.println("[AuctionWorkspace] importAuctionFromNetwork failed for " + auctionId + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle BID_PLACED from a remote client:
+     * updates current_highest_bid and saves the bid to the local bid_history table,
+     * then schedules a UI refresh via reloadAuctionFromDb().
+     */
+    private void importBidFromNetwork(NetworkMessage msg) {
+        String auctionId  = msg.getAuctionId();
+        String bidderName = msg.getUsername();
+        double amount     = msg.getAmount();
+        String payload    = msg.getPayload();
+
+        try {
+            // 1. Update current price in local DB
+            auctionRepository.updateCurrentBid(auctionId, amount);
+
+            // 2. Persist the bid record (payload = bidId§bidderEmail§bidTime)
+            if (payload != null && !payload.isBlank()) {
+                String[] p = payload.split(SEP, -1);
+                if (p.length >= 3) {
+                    String bidId       = p[0];
+                    String bidderEmail = p[1];
+                    LocalDateTime bidTime = LocalDateTime.parse(p[2], ISO);
+
+                    Bidder bidder = new Bidder(bidderName, "", bidderEmail, 0);
+                    BidTransaction bid = new BidTransaction(bidder, amount);
+                    bid.setId(bidId);
+                    bid.setBidTime(bidTime);
+
+                    bidRepository.saveBidIfAbsent(auctionId, bid);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[AuctionWorkspace] importBidFromNetwork failed: " + e.getMessage());
+        }
+        // Schedule UI refresh — reloadAuctionFromDb now finds the fresh data
+        Platform.runLater(() -> reloadAuctionFromDb(auctionId));
+    }
+
+    private void updateAuctionStatusInDb(String auctionId, AuctionStatus status) {
+        try {
+            auctionRepository.updateStatus(auctionId, status);
+        } catch (Exception e) {
+            System.err.println("[AuctionWorkspace] updateAuctionStatusInDb failed: " + e.getMessage());
+        }
+    }
+
+    /** Serialise an Auction to a SEP-delimited string for cross-machine sync. */
+    private String serializeAuction(Auction a) {
+        Item item = a.getItem();
+        String type      = resolveType(item);
+        String extraInfo = resolveExtra(item);
+        String sellerUser  = a.getSeller() != null ? nullSafe(a.getSeller().getUsername()) : "";
+        String sellerEmail = a.getSeller() != null ? nullSafe(a.getSeller().getEmail())    : "";
+        LocalDateTime createdAt = a.getCreatedAt() != null ? a.getCreatedAt() : LocalDateTime.now();
+
+        return String.join(SEP,
+                type,
+                nullSafe(item.getName()),
+                nullSafe(item.getDescription()),
+                String.valueOf(item.getStartingPrice()),
+                String.valueOf(item.getCurrentHighestBid()),
+                item.getStartTime().format(ISO),
+                item.getEndTime().format(ISO),
+                sellerUser,
+                sellerEmail,
+                nullSafe(extraInfo),
+                a.getStatus().name(),
+                createdAt.format(ISO)
+        );
+    }
+
+    private static String resolveType(Item item) {
+        if (item instanceof Electronics) return "electronics";
+        if (item instanceof Art)         return "art";
+        if (item instanceof Vehicle)     return "vehicle";
+        return "general";
+    }
+
+    private static String resolveExtra(Item item) {
+        if (item instanceof Electronics e) return nullSafe(e.getBrand());
+        if (item instanceof Art art)       return nullSafe(art.getArtist());
+        if (item instanceof Vehicle v)     return nullSafe(v.getMake());
+        return "";
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 }

@@ -25,8 +25,12 @@ class ClientHandler implements Runnable {
 
             NetworkMessage message;
             while ((message = (NetworkMessage) in.readObject()) != null) {
-                // Relay every incoming message to all connected clients
-                server.broadcast(message);
+                if (message.getType() == NetworkMessage.Type.SYNC_REQUEST) {
+                    // Do NOT broadcast — send full auction list to this client only
+                    server.handleSyncRequest(this);
+                } else {
+                    server.broadcast(message);
+                }
             }
         } catch (EOFException | SocketException ignored) {
             // Client disconnected cleanly

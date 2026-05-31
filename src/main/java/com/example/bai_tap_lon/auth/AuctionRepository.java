@@ -93,6 +93,36 @@ public class    AuctionRepository {
         }
     }
 
+    /** Update only the status column — used for remote DB sync. */
+    public void updateStatus(String auctionId, AuctionStatus status) {
+        String sql = "UPDATE auction_sessions SET status = ? WHERE id = ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, status.name());
+            statement.setString(2, auctionId);
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new RuntimeException("Cannot update auction status.", ex);
+        }
+    }
+
+    /**
+     * Update current_highest_bid only if the new value is higher.
+     * Handles out-of-order network messages gracefully.
+     */
+    public void updateCurrentBid(String auctionId, double amount) {
+        String sql = "UPDATE auction_sessions SET current_highest_bid = ? WHERE id = ? AND current_highest_bid < ?";
+        try (Connection connection = databaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, amount);
+            statement.setString(2, auctionId);
+            statement.setDouble(3, amount);
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new RuntimeException("Cannot update current bid.", ex);
+        }
+    }
+
     public void update(Auction auction) {
         String sql = """
                 UPDATE auction_sessions

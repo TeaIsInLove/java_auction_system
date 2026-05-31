@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Multi-client auction server. Each connecting JavaFX client gets its own
@@ -22,6 +23,13 @@ public class AuctionServer {
     private final List<ClientHandler> clients = new CopyOnWriteArrayList<>();
     private ServerSocket serverSocket;
     private volatile boolean running;
+
+    /**
+     * Called when a client requests a full sync (SYNC_REQUEST message).
+     * The callback receives a {@code Consumer<NetworkMessage>} — call it to send
+     * a message to that specific client only (not broadcast).
+     */
+    private Consumer<Consumer<NetworkMessage>> onSyncRequest;
 
     public void start() throws IOException {
         serverSocket = new ServerSocket(PORT);
@@ -48,6 +56,20 @@ public class AuctionServer {
             }
         }
         pool.shutdown();
+    }
+
+    public void setOnSyncRequest(Consumer<Consumer<NetworkMessage>> handler) {
+        this.onSyncRequest = handler;
+    }
+
+    /**
+     * Called by {@link ClientHandler} when it receives a SYNC_REQUEST.
+     * Invokes the registered callback with a send-function scoped to that client.
+     */
+    void handleSyncRequest(ClientHandler client) {
+        if (onSyncRequest != null) {
+            onSyncRequest.accept(client::send);
+        }
     }
 
     /** Broadcast a message to every connected client. */

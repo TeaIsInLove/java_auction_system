@@ -7,7 +7,11 @@ public class NetworkMessage implements Serializable {
 
     public enum Type {
         BID_PLACED, AUCTION_CREATED, AUCTION_STARTED,
-        AUCTION_ENDED, AUCTION_CANCELLED, PING
+        AUCTION_ENDED, AUCTION_CANCELLED, PING,
+        /** Client → Server: request full auction list from the host instance. */
+        SYNC_REQUEST,
+        /** Server → Client: one auction record sent during sync. */
+        AUCTION_DATA
     }
 
     private final Type type;

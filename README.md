@@ -211,5 +211,5 @@ GitHub Actions (`.github/workflows/ci.yml`) tự động chạy trên mỗi lầ
 
 ## Tài liệu
 
-- **Báo cáo PDF:** [Điền link sau khi có]
-- **Video demo:** https://youtu.be/mtPrMOAMlX4?si=P8Dcv9RbvmRNx82D
+- **Báo cáo PDF:** [Tải xuống](https://github.com/TeaIsInLove/java_auction_system/releases/download/v1.0-submit/Bao_Cao_Final_AuctionSystem.1.pdf)
+- **Video demo:** [Xem trên YouTube](https://youtu.be/mtPrMOAMlX4?si=P8Dcv9RbvmRNx82D)
